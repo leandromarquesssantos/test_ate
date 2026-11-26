@@ -1,7 +1,7 @@
 # Plano Técnico — REQ-002 (Uso Diário Completo)
 
 - **Spec de referência:** `./spec.md`
-- **Status:** Pending Approval
+- **Status:** Approved
 
 ---
 
@@ -17,7 +17,8 @@ packages/core/src/
 ├── accounts.mjs      # NOVO: gestão de contas e cálculo de saldo acumulado por conta
 ├── recurring.mjs     # NOVO: regras recorrentes + materialização idempotente por mês
 ├── export.mjs        # NOVO: gerador CSV RFC-4180 com proteção contra formula injection
-├── ledger.mjs        # Refatorado: orquestra transações (incl. update/transfer), filtros e resumo
+├── summary.mjs       # NOVO: cálculo de resumo mensal e CRUD de orçamentos
+├── ledger.mjs        # Refatorado: orquestra transações (incl. update/transfer), filtros e delegates
 └── index.mjs         # Exports públicos
 
 packages/api/src/
@@ -39,7 +40,8 @@ packages/web/src/
 ├── components.css    # NOVO: filtros, barras, badges, modal/form de edição e listas
 ├── api-client.mjs    # Cliente HTTP completo + escapeHtml + formatBRL
 ├── render.mjs        # NOVO: renderizadores puros e seguros (XSS-safe)
-└── app.mjs           # Estado, filtros, edição inline, contas, recorrentes e download CSV
+├── handlers.mjs      # NOVO: bindings de formulários secundários (contas, transferências, recorrentes, CSV)
+└── app.mjs           # Estado, filtros, edição inline e orquestração da UI
 ```
 
 ---

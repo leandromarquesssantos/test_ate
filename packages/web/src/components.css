@@ -1,0 +1,97 @@
+.banner {
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  font-size: 0.9rem;
+}
+.banner.error {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.5);
+}
+.hidden { display: none; }
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+.section-head h2 { margin: 0; }
+.muted { color: var(--muted); font-size: 0.85rem; }
+
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.account-pill {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+.account-pill strong { display: block; font-size: 0.95rem; }
+
+.split-forms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 0.75rem;
+}
+.transfer-form { grid-template-columns: 1fr 1fr 110px auto; }
+.recurring-form {
+  display: grid;
+  grid-template-columns: 110px 100px 1fr 1fr 75px 1fr auto;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.budgets-list, .tx-list { display: grid; gap: 0.65rem; }
+.budget-item { display: grid; gap: 0.35rem; }
+.budget-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.bar-track { height: 8px; border-radius: 999px; background: var(--surface-alt); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999px; background: var(--income); }
+.bar-fill.warning { background: var(--warning); }
+.bar-fill.exceeded { background: var(--expense); }
+
+.tx-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+.tx-amount { font-weight: 700; font-variant-numeric: tabular-nums; }
+.tx-amount.income { color: var(--income); }
+.tx-amount.expense { color: var(--expense); }
+.tx-amount.transfer { color: var(--accent); }
+.tx-right { display: flex; align-items: center; gap: 0.5rem; }
+
+@media (max-width: 780px) {
+  .row, .compact-form, .transfer-form, .recurring-form, .filter-bar {
+    grid-template-columns: 1fr;
+  }
+}

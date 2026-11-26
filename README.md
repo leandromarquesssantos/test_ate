@@ -1,20 +1,11 @@
 # Atelier Fin — POC da Metodologia Atelier
 
-POC prática da metodologia **Atelier** (*Spec-Driven Development* + *Laws, Not Vibes*) aplicada a um MVP de **gestão financeira pessoal** (Core + API REST + CLI + WebApp responsivo), sem dependências externas e 100% cross-platform (Node 22 ESM).
+POC prática da metodologia **Atelier** (*Spec-Driven Development* + *Laws, Not Vibes* + *Git Worktrees*) aplicada a um sistema de **gestão financeira pessoal** (Core + API REST + CLI + WebApp responsivo), sem dependências externas e 100% cross-platform (Node 22 ESM).
 
-## Estrutura Atelier do Repositório
+## Histórico de Entregas (Memória Versionada)
 
-- `AGENTS.md` — Constituição do repositório (processo *Bounded vs. Substantial*, leis determinísticas e contrato de *done-state*).
-- `.agents/skills/` — Skills do ciclo Atelier (`atelier-spec-brainstorm`, `atelier-spec-plan`, `atelier-spec-implement`, `atelier-code-review`).
-- `docs/specs/REQ-001-finance-manager/` — Memória versionada da feature (`spec.md`, `plan.md`, `tasks.json`, `review.md`).
-- `scripts/atelier-gate.mjs` — Quality gate determinístico (`npm run gate`).
-
-## Arquitetura do App (`packages/`)
-
-- `packages/core` — Domínio financeiro puro (centavos inteiros, transações, orçamentos, alertas e persistência JSON atômica).
-- `packages/api` — API REST HTTP + servidor estático seguro do WebApp.
-- `packages/cli` — Interface de linha de comando compartilhando o mesmo domínio e ledger.
-- `packages/web` — WebApp responsivo (dashboard, lançamentos, orçamentos e proteção XSS).
+- `docs/specs/REQ-001-finance-manager/` — MVP inicial (transações em centavos, orçamentos com alertas, resumo mensal, API, CLI e WebApp).
+- `docs/specs/REQ-002-daily-webapp-features/` — Uso diário completo (edição de transações, remoção de orçamentos, busca/filtros combinados, contas/carteiras, transferências, recorrências mensais idempotentes e exportação CSV segura).
 
 ## Como executar
 
@@ -29,11 +20,13 @@ npm run api
 # Acesse http://127.0.0.1:3000
 ```
 
-### 3. Usar via CLI (mesmo arquivo data/ledger.json)
+### 3. Exemplos no CLI (mesmo arquivo `data/ledger.json`)
 ```bash
 npm run cli -- add --type income --amount 5000 --category salario --desc "Salário"
-npm run cli -- add --type expense --amount 125,50 --category alimentacao --desc "Mercado"
-npm run cli -- budget --category alimentacao --limit 1000
-npm run cli -- summary
-npm run cli -- list
+npm run cli -- accounts add --name "Carteira" --type cash
+npm run cli -- transfer --from acc_default --to <id_carteira> --amount 300
+npm run cli -- recurring add --type expense --amount 1800 --category moradia --desc "Aluguel" --day 5
+npm run cli -- recurring apply --month 2026-11
+npm run cli -- list --q aluguel
+npm run cli -- export --month 2026-11
 ```

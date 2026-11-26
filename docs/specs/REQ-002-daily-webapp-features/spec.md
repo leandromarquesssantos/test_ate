@@ -1,6 +1,6 @@
 # REQ-002 — Uso Diário Completo no WebApp (Edição, Filtros, Contas, Recorrência e CSV)
 
-- **Status:** Draft (Aguardando aprovação do Principal Engineer)
+- **Status:** Done (Aprovado e verificado em 2026-11-26)
 - **Autor:** Principal Engineer + Agente Atelier
 - **Data:** 2026-11-26
 - **Pré-requisito:** `REQ-001` (concluída)
