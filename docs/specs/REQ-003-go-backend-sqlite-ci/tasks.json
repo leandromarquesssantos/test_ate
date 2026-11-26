@@ -1,0 +1,56 @@
+{
+  "req": "REQ-003",
+  "title": "Migração de Core, API e CLI para Go + SQLite (Pure Go) + CI",
+  "status": "pending_approval",
+  "tasks": [
+    {
+      "id": "T-01",
+      "layer": "setup",
+      "title": "Inicializar módulo Go (backend/go.mod) com modernc.org/sqlite (sem CGO) em worktree feat/req-003",
+      "requirements": ["RF-02"],
+      "status": "pending"
+    },
+    {
+      "id": "T-02",
+      "layer": "domain",
+      "title": "Implementar backend/internal/domain (money, validation, models, summary, csv) com TDD",
+      "requirements": ["RF-01", "RF-03"],
+      "status": "pending"
+    },
+    {
+      "id": "T-03",
+      "layer": "store",
+      "title": "Implementar backend/internal/store (SQLite ACID, migrations, import JSON legado) com TDD",
+      "requirements": ["RF-02"],
+      "status": "pending"
+    },
+    {
+      "id": "T-04",
+      "layer": "httpapi",
+      "title": "Implementar backend/internal/httpapi e cmd/fin-server com paridade REST e testes HTTP",
+      "requirements": ["RF-01"],
+      "status": "pending"
+    },
+    {
+      "id": "T-05",
+      "layer": "cli",
+      "title": "Implementar backend/internal/cli e cmd/fin-cli com testes automatizados",
+      "requirements": ["RF-03"],
+      "status": "pending"
+    },
+    {
+      "id": "T-06",
+      "layer": "gate-ci",
+      "title": "Atualizar scripts/atelier-gate.mjs, AGENTS.md, package.json e criar .github/workflows/atelier-gate.yml",
+      "requirements": ["RF-04"],
+      "status": "pending"
+    },
+    {
+      "id": "T-07",
+      "layer": "review",
+      "title": "Rodar npm run gate completo, gerar review.md multi-perspectiva e integrar na main",
+      "requirements": ["RF-01", "RF-02", "RF-03", "RF-04"],
+      "status": "pending"
+    }
+  ]
+}
