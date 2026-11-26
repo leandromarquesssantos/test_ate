@@ -26,19 +26,20 @@ Antes de editar código, classifique o pedido:
 
 Regras verificadas automaticamente por `node scripts/atelier-gate.mjs`:
 
-1. **Anti-monólito:** Nenhum arquivo de código-fonte (`src/`) pode exceder **220 linhas**. Divida responsabilidades coesas em módulos pequenos.
-2. **Dinheiro em centavos inteiros:** Valores monetários no domínio e na API DEVEM ser armazenados e calculados como inteiros (`amountCents: number`), nunca `float` para evitar erros de precisão IEEE-754.
-3. **Separação de camadas:** `packages/core` não pode importar nada de `api`, `cli`, `web` ou `mobile` (domínio puro e testável).
-4. **Contrato de Artefatos:** Toda `REQ-XXX` marcada como concluída deve possuir `spec.md`, `plan.md`, `tasks.json` (100% `done`) e `review.md`.
-5. **Contrato de "Done-State":** Nenhum agente pode declarar uma tarefa concluída enquanto `npm run gate` (testes + checagens arquiteturais + build/validação) não passar com código `0`.
+1. **Anti-monólito:** Nenhum arquivo de produção (`backend/**/*.go` exceto `*_test.go`, e `packages/*/src/*`) pode exceder **220 linhas**. Divida responsabilidades coesas em módulos pequenos.
+2. **Dinheiro em centavos inteiros:** Valores monetários DEVEM ser armazenados e calculados como inteiros (`domain.Cents` / `int64` / `INTEGER` no SQLite), nunca `float`.
+3. **Separação de camadas:** `backend/internal/domain` deve usar **apenas stdlib Go** (proibido importar `database/sql`, `net/http`, `store`, `httpapi` ou `cli`).
+4. **Zero dependências de Windows / CGO:** SQLite deve operar em Go puro (`modernc.org/sqlite`), compilando sem GCC/MSVC.
+5. **Contrato de Artefatos:** Toda `REQ-XXX` concluída deve possuir `spec.md`, `plan.md`, `tasks.json` (100% `done`) e `review.md`.
+6. **Contrato de "Done-State":** Nenhum agente pode declarar uma tarefa concluída enquanto `npm run gate` (`gofmt`, `go vet`, `go test`, testes WebApp e leis arquiteturais) não passar com código `0`.
 
 ---
 
 ## 3. Paralelismo com Git Worktrees
 
-Para executar múltiplas `REQ-XXX` ou frentes (`api`, `web`, `mobile`) em paralelo sem conflito na `main`:
+Para executar múltiplas `REQ-XXX` em paralelo sem conflito na `main`:
 ```bash
-git worktree add ../concept-req-002 -b feat/req-002
+git worktree add ../test_ate-req-004 -b feat/req-004
 ```
 Cada agente trabalha isolado em seu worktree e só integra na `main` após `npm run gate` verde e aprovação humana.
 
