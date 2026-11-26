@@ -30,6 +30,17 @@ export function sendJson(res, status, data) {
   res.end(payload);
 }
 
+export function sendCsv(res, filename, csvText) {
+  const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+  res.writeHead(200, {
+    "Content-Type": "text/csv; charset=utf-8",
+    "Content-Disposition": `attachment; filename="${safeName}"`,
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store"
+  });
+  res.end(csvText);
+}
+
 export async function readJsonBody(req) {
   const chunks = [];
   let total = 0;
