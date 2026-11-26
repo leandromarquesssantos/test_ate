@@ -1,0 +1,56 @@
+{
+  "req": "REQ-002",
+  "title": "Uso Diário Completo no WebApp (Edição, Filtros, Contas, Recorrência e CSV)",
+  "status": "pending_approval",
+  "tasks": [
+    {
+      "id": "T-01",
+      "layer": "core",
+      "title": "Modularizar validation.mjs e adicionar edição de transação, remoção de orçamento e busca textual com TDD",
+      "requirements": ["RF-01", "RF-02"],
+      "status": "pending"
+    },
+    {
+      "id": "T-02",
+      "layer": "core",
+      "title": "Implementar contas/carteiras, transferências, retrocompatibilidade de store e saldo por conta com TDD",
+      "requirements": ["RF-03"],
+      "status": "pending"
+    },
+    {
+      "id": "T-03",
+      "layer": "core",
+      "title": "Implementar regras recorrentes idempotentes e exportação CSV segura (anti formula-injection) com TDD",
+      "requirements": ["RF-04", "RF-05"],
+      "status": "pending"
+    },
+    {
+      "id": "T-04",
+      "layer": "api",
+      "title": "Modularizar rotas REST e expor PATCH/DELETE/filtros/contas/transferências/recorrentes/CSV com testes HTTP",
+      "requirements": ["RF-01", "RF-02", "RF-03", "RF-04", "RF-05"],
+      "status": "pending"
+    },
+    {
+      "id": "T-05",
+      "layer": "cli",
+      "title": "Expandir CLI (edit, filtros, accounts, transfer, recurring, export) com testes automatizados",
+      "requirements": ["RF-01", "RF-02", "RF-03", "RF-04", "RF-05", "RF-06"],
+      "status": "pending"
+    },
+    {
+      "id": "T-06",
+      "layer": "web",
+      "title": "Atualizar WebApp (edição inline, filtros/busca, contas/transferências, recorrentes e download CSV) + testes",
+      "requirements": ["RF-06"],
+      "status": "pending"
+    },
+    {
+      "id": "T-07",
+      "layer": "review",
+      "title": "Executar npm run gate (100% testes + leis) e gerar review.md multi-perspectiva da REQ-002",
+      "requirements": ["RF-01", "RF-02", "RF-03", "RF-04", "RF-05", "RF-06"],
+      "status": "pending"
+    }
+  ]
+}
