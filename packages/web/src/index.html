@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atelier Fin — Gestão Financeira</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="badge">ATELIER</span>
+        <h1>Atelier Fin</h1>
+      </div>
+      <label class="month-picker">
+        <span>Mês</span>
+        <input id="month-input" type="month" />
+      </label>
+    </header>
+
+    <main class="container">
+      <section class="kpi-grid" aria-label="Resumo financeiro">
+        <article class="card kpi">
+          <span class="label">Saldo do mês</span>
+          <strong id="kpi-balance" class="value">R$ 0,00</strong>
+        </article>
+        <article class="card kpi income">
+          <span class="label">Receitas</span>
+          <strong id="kpi-income" class="value">R$ 0,00</strong>
+        </article>
+        <article class="card kpi expense">
+          <span class="label">Despesas</span>
+          <strong id="kpi-expense" class="value">R$ 0,00</strong>
+        </article>
+      </section>
+
+      <div id="status-banner" class="banner hidden" role="status"></div>
+
+      <section class="workspace-grid">
+        <article class="card">
+          <h2>Novo Lançamento</h2>
+          <form id="tx-form" class="stack">
+            <div class="row">
+              <label>
+                Tipo
+                <select name="type" required>
+                  <option value="expense">Despesa</option>
+                  <option value="income">Receita</option>
+                </select>
+              </label>
+              <label>
+                Valor (R$)
+                <input name="amount" type="text" placeholder="49,90" required />
+              </label>
+            </div>
+            <div class="row">
+              <label>
+                Categoria
+                <input name="category" type="text" placeholder="alimentacao" required />
+              </label>
+              <label>
+                Data
+                <input name="date" type="date" required />
+              </label>
+            </div>
+            <label>
+              Descrição
+              <input name="description" type="text" placeholder="Ex: Supermercado" maxlength="140" />
+            </label>
+            <button type="submit" class="btn-primary">Adicionar transação</button>
+          </form>
+        </article>
+
+        <article class="card">
+          <h2>Orçamento Mensal</h2>
+          <form id="budget-form" class="row compact-form">
+            <input name="category" type="text" placeholder="Categoria" required />
+            <input name="limit" type="text" placeholder="Limite R$" required />
+            <button type="submit" class="btn-secondary">Salvar</button>
+          </form>
+          <div id="budgets-list" class="budgets-list"></div>
+        </article>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>Transações do Mês</h2>
+          <span id="tx-count" class="muted">0 lançamentos</span>
+        </div>
+        <div id="tx-list" class="tx-list"></div>
+      </section>
+    </main>
+
+    <script type="module" src="/app.mjs"></script>
+  </body>
+</html>
