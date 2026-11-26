@@ -1,0 +1,56 @@
+{
+  "req": "REQ-001",
+  "title": "Atelier Fin — Mini App de Gestão Financeira Multi-Superfície",
+  "status": "pending_approval",
+  "tasks": [
+    {
+      "id": "T-01",
+      "layer": "core",
+      "title": "Implementar utilitários de dinheiro (centavos/BRL) e store JSON atômico com TDD",
+      "requirements": ["RF-01", "RF-04"],
+      "status": "pending"
+    },
+    {
+      "id": "T-02",
+      "layer": "core",
+      "title": "Implementar LedgerService (transações, filtros, orçamentos, resumo e alertas) com TDD",
+      "requirements": ["RF-01", "RF-02", "RF-03", "RF-04"],
+      "status": "pending"
+    },
+    {
+      "id": "T-03",
+      "layer": "api",
+      "title": "Implementar API REST + static server seguro + testes de integração HTTP",
+      "requirements": ["RF-05"],
+      "status": "pending"
+    },
+    {
+      "id": "T-04",
+      "layer": "cli",
+      "title": "Implementar CLI (add, list, delete, budget, summary) + testes automatizados",
+      "requirements": ["RF-06"],
+      "status": "pending"
+    },
+    {
+      "id": "T-05",
+      "layer": "web",
+      "title": "Implementar Frontend Web mobile-first + PWA (manifest/SW) + testes de contrato",
+      "requirements": ["RF-07"],
+      "status": "pending"
+    },
+    {
+      "id": "T-06",
+      "layer": "mobile",
+      "title": "Configurar wrapper Capacitor Android (packages/mobile) e documentação de build APK",
+      "requirements": ["RF-07"],
+      "status": "pending"
+    },
+    {
+      "id": "T-07",
+      "layer": "review",
+      "title": "Executar npm run gate (testes + leis) e gerar review.md multi-perspectiva",
+      "requirements": ["RF-01", "RF-02", "RF-03", "RF-04", "RF-05", "RF-06", "RF-07"],
+      "status": "pending"
+    }
+  ]
+}

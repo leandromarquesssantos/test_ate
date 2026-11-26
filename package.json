@@ -1,0 +1,16 @@
+{
+  "name": "atelier-fin-poc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --test packages/*/test/*.test.mjs",
+    "gate": "node scripts/atelier-gate.mjs --with-tests",
+    "gate:spec": "node scripts/atelier-gate.mjs --spec-only",
+    "api": "node packages/api/src/index.mjs",
+    "cli": "node packages/cli/src/index.mjs"
+  }
+}
