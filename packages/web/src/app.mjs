@@ -1,15 +1,20 @@
-import { apiClient, escapeHtml, formatBRL } from "./api-client.mjs";
+import { apiClient, centsToInput, formatBRL } from "./api-client.mjs";
+import {
+  renderAccountsHtml,
+  renderBudgetsHtml,
+  renderRecurringHtml,
+  renderTransactionsHtml,
+  syncAccountSelects
+} from "./render.mjs";
+import { bindSecondaryHandlers } from "./handlers.mjs";
 
-const monthInput = document.getElementById("month-input");
-const txForm = document.getElementById("tx-form");
-const budgetForm = document.getElementById("budget-form");
-const banner = document.getElementById("status-banner");
-const kpiBalance = document.getElementById("kpi-balance");
-const kpiIncome = document.getElementById("kpi-income");
-const kpiExpense = document.getElementById("kpi-expense");
-const budgetsList = document.getElementById("budgets-list");
-const txList = document.getElementById("tx-list");
-const txCount = document.getElementById("tx-count");
+const $ = (id) => document.getElementById(id);
+const monthInput = $("month-input");
+const txForm = $("tx-form");
+const filterQ = $("filter-q");
+const filterType = $("filter-type");
+const filterAccount = $("filter-account");
+const banner = $("status-banner");
 
 const now = new Date();
 const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -17,127 +22,125 @@ const todayLocal = `${defaultMonth}-${String(now.getDate()).padStart(2, "0")}`;
 monthInput.value = defaultMonth;
 txForm.elements.date.value = todayLocal;
 
+let lastItems = [];
+
 function showMessage(text, isError = false) {
   banner.textContent = text;
   banner.classList.remove("hidden", "error");
   if (isError) banner.classList.add("error");
 }
 
-function renderBudgets(budgets) {
-  if (!budgets.length) {
-    budgetsList.innerHTML = '<p class="muted">Nenhum orçamento definido para este mês.</p>';
-    return;
-  }
-
-  budgetsList.innerHTML = budgets
-    .map((b) => {
-      const width = Math.min(b.percentUsed, 100);
-      const cls = b.status === "ok" ? "" : escapeHtml(b.status);
-      return `
-        <div class="budget-item">
-          <div class="budget-meta">
-            <strong>${escapeHtml(b.category)}</strong>
-            <span>${formatBRL(b.spentCents)} / ${formatBRL(b.limitCents)} (${b.percentUsed}%)</span>
-          </div>
-          <div class="bar-track">
-            <div class="bar-fill ${cls}" style="width:${width}%"></div>
-          </div>
-        </div>`;
-    })
-    .join("");
+function getMonth() {
+  return monthInput.value || defaultMonth;
 }
 
-function renderTransactions(items) {
-  txCount.textContent = `${items.length} lançamento(s)`;
-  if (!items.length) {
-    txList.innerHTML = '<p class="muted">Nenhuma transação registrada neste mês.</p>';
-    return;
-  }
+function currentFilters() {
+  return {
+    month: getMonth(),
+    q: filterQ.value,
+    type: filterType.value,
+    accountId: filterAccount.value
+  };
+}
 
-  txList.innerHTML = items
-    .map((tx) => {
-      const sign = tx.type === "income" ? "+" : "-";
-      const desc = tx.description ? ` · ${escapeHtml(tx.description)}` : "";
-      return `
-        <div class="tx-item">
-          <div>
-            <strong>${escapeHtml(tx.category)}</strong>${desc}
-            <div class="muted">${escapeHtml(tx.date)}</div>
-          </div>
-          <div class="tx-right">
-            <span class="tx-amount ${escapeHtml(tx.type)}">${sign}${formatBRL(tx.amountCents)}</span>
-            <button type="button" class="btn-danger" data-delete-id="${escapeHtml(tx.id)}">Excluir</button>
-          </div>
-        </div>`;
-    })
-    .join("");
+function resetTxForm() {
+  txForm.elements.editId.value = "";
+  txForm.elements.amount.value = "";
+  txForm.elements.description.value = "";
+  txForm.elements.date.value = todayLocal;
+  $("tx-form-title").textContent = "Novo Lançamento";
+  $("tx-submit-btn").textContent = "Adicionar transação";
+  $("cancel-edit-btn").classList.add("hidden");
+}
+
+function startEdit(tx) {
+  txForm.elements.editId.value = tx.id;
+  txForm.elements.type.value = tx.type;
+  txForm.elements.amount.value = centsToInput(tx.amountCents);
+  txForm.elements.category.value = tx.category;
+  txForm.elements.accountId.value = tx.accountId;
+  txForm.elements.date.value = tx.date;
+  txForm.elements.description.value = tx.description ?? "";
+  $("tx-form-title").textContent = `Editando (${tx.id})`;
+  $("tx-submit-btn").textContent = "Salvar alterações";
+  $("cancel-edit-btn").classList.remove("hidden");
+  txForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 async function refresh() {
-  const month = monthInput.value || defaultMonth;
+  const filters = currentFilters();
   try {
-    const [summary, txData] = await Promise.all([
-      apiClient.getSummary(month),
-      apiClient.listTransactions(month)
+    const [summary, txData, recData] = await Promise.all([
+      apiClient.getSummary(filters.month),
+      apiClient.listTransactions(filters),
+      apiClient.listRecurring()
     ]);
-    kpiBalance.textContent = formatBRL(summary.balanceCents);
-    kpiIncome.textContent = formatBRL(summary.totalIncomeCents);
-    kpiExpense.textContent = formatBRL(summary.totalExpenseCents);
-    renderBudgets(summary.budgets);
-    renderTransactions(txData.items);
+    lastItems = txData.items;
+    const accMap = new Map(summary.accounts.map((a) => [a.id, a.name]));
+    syncAccountSelects(summary.accounts, filterAccount);
+
+    $("kpi-balance").textContent = formatBRL(summary.balanceCents);
+    $("kpi-income").textContent = formatBRL(summary.totalIncomeCents);
+    $("kpi-expense").textContent = formatBRL(summary.totalExpenseCents);
+    $("accounts-list").innerHTML = renderAccountsHtml(summary.accounts);
+    $("budgets-list").innerHTML = renderBudgetsHtml(summary.budgets);
+    $("recurring-list").innerHTML = renderRecurringHtml(recData.items, accMap);
+    $("tx-count").textContent = `${txData.items.length} lançamento(s)`;
+    $("tx-list").innerHTML = renderTransactionsHtml(txData.items, accMap);
   } catch (err) {
     showMessage(err.message, true);
   }
 }
 
-txForm.addEventListener("submit", async (e) => {
+async function runAction(fn, okMsg) {
+  try {
+    const result = await fn();
+    if (okMsg) showMessage(typeof okMsg === "function" ? okMsg(result) : okMsg);
+    await refresh();
+  } catch (err) {
+    showMessage(err.message, true);
+  }
+}
+
+txForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const data = new FormData(txForm);
-  try {
-    await apiClient.addTransaction({
-      type: data.get("type"),
-      amount: data.get("amount"),
-      category: data.get("category"),
-      description: data.get("description"),
-      date: data.get("date")
-    });
-    txForm.elements.amount.value = "";
-    txForm.elements.description.value = "";
-    showMessage("Transação adicionada com sucesso.");
-    await refresh();
-  } catch (err) {
-    showMessage(err.message, true);
+  const editId = String(data.get("editId") ?? "").trim();
+  const payload = {
+    type: data.get("type"),
+    amount: data.get("amount"),
+    category: data.get("category"),
+    accountId: data.get("accountId"),
+    date: data.get("date"),
+    description: data.get("description")
+  };
+  runAction(
+    async () => {
+      if (editId) await apiClient.updateTransaction(editId, payload);
+      else await apiClient.addTransaction(payload);
+      resetTxForm();
+    },
+    editId ? "Transação atualizada." : "Transação adicionada."
+  );
+});
+
+$("cancel-edit-btn").addEventListener("click", resetTxForm);
+
+$("tx-list").addEventListener("click", (e) => {
+  const editBtn = e.target.closest("[data-edit-id]");
+  if (editBtn) {
+    const tx = lastItems.find((i) => i.id === editBtn.dataset.editId);
+    if (tx) startEdit(tx);
+    return;
+  }
+  const delBtn = e.target.closest("[data-delete-id]");
+  if (delBtn) {
+    runAction(() => apiClient.deleteTransaction(delBtn.dataset.deleteId), "Transação removida.");
   }
 });
 
-budgetForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const data = new FormData(budgetForm);
-  try {
-    await apiClient.setBudget({
-      month: monthInput.value || defaultMonth,
-      category: data.get("category"),
-      limit: data.get("limit")
-    });
-    budgetForm.reset();
-    showMessage("Orçamento mensal atualizado.");
-    await refresh();
-  } catch (err) {
-    showMessage(err.message, true);
-  }
-});
-
-txList.addEventListener("click", async (e) => {
-  const btn = e.target.closest("[data-delete-id]");
-  if (!btn) return;
-  try {
-    await apiClient.deleteTransaction(btn.dataset.deleteId);
-    showMessage("Transação removida.");
-    await refresh();
-  } catch (err) {
-    showMessage(err.message, true);
-  }
-});
-
-monthInput.addEventListener("change", refresh);
+bindSecondaryHandlers({ $, getMonth, todayLocal, currentFilters, runAction });
+[monthInput, filterQ, filterType, filterAccount].forEach((el) =>
+  el.addEventListener("input", refresh)
+);
 refresh();
