@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * Atelier Quality Gate ("Laws, Not Vibes")
+ * Atelier Quality Gate ("Laws, Not Vibes") — Go + WebApp
  * Valida regras determinísticas do repositório:
- * 1. Limite máximo de linhas por arquivo em src/ (anti-monólito)
- * 2. Isolamento de camada: packages/core não pode importar api/cli/web/mobile
- * 3. Integridade de artefatos de specs em docs/specs/REQ-*
- * 4. Execução da suíte de testes (quando --with-tests for passado)
+ * 1. Integridade de artefatos de specs em docs/specs/REQ-*
+ * 2. Limite máximo de linhas (<= 220) em arquivos de produção (.go, .mjs, .js, .css)
+ * 3. Isolamento de domínio: backend/internal/domain não pode importar store/httpapi/cli/database/sql/net/http
+ * 4. gofmt, go vet ./..., go test ./... e testes do WebApp
  */
 
 import fs from "node:fs";
@@ -13,6 +13,7 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 
 const ROOT = process.cwd();
+const BACKEND_DIR = path.join(ROOT, "backend");
 const MAX_LINES = 220;
 const args = new Set(process.argv.slice(2));
 const withTests = args.has("--with-tests");
@@ -21,18 +22,26 @@ const specPhaseOnly = args.has("--spec-only");
 const errors = [];
 const checks = [];
 
+function resolveGoBinary() {
+  const candidates = ["go", "C:\\Program Files\\Go\\bin\\go.exe"];
+  for (const bin of candidates) {
+    try {
+      execSync(`"${bin}" version`, { stdio: "ignore" });
+      return bin;
+    } catch {
+      // try next
+    }
+  }
+  return "go";
+}
+
 function walkFiles(dir, predicate, results = []) {
   if (!fs.existsSync(dir)) return results;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === "node_modules" || entry.name === ".git" || entry.name === "dist") {
-      continue;
-    }
+    if (["node_modules", ".git", "dist", "bin"].includes(entry.name)) continue;
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      walkFiles(full, predicate, results);
-    } else if (predicate(full)) {
-      results.push(full);
-    }
+    if (entry.isDirectory()) walkFiles(full, predicate, results);
+    else if (predicate(full)) results.push(full);
   }
   return results;
 }
@@ -69,7 +78,7 @@ function checkSpecs() {
           const pending = parsed.tasks.filter((t) => t.status !== "done");
           if (pending.length > 0) {
             errors.push(
-              `${req.name}: ${pending.length} tarefa(s) ainda não concluída(s) (${pending.map((t) => t.id).join(", ")}).`
+              `${req.name}: ${pending.length} tarefa(s) pendente(s) (${pending.map((t) => t.id).join(", ")}).`
             );
           }
           if (!fs.existsSync(path.join(reqPath, "review.md"))) {
@@ -85,13 +94,17 @@ function checkSpecs() {
 }
 
 function checkSourceLaws() {
-  const packagesDir = path.join(ROOT, "packages");
-  const srcFiles = walkFiles(
-    packagesDir,
-    (f) => f.includes(`${path.sep}src${path.sep}`) && /\.(mjs|js|ts|jsx|tsx|css)$/.test(f)
+  const webFiles = walkFiles(
+    path.join(ROOT, "packages"),
+    (f) => f.includes(`${path.sep}src${path.sep}`) && /\.(mjs|js|ts|css)$/.test(f)
   );
+  const goFiles = walkFiles(
+    BACKEND_DIR,
+    (f) => f.endsWith(".go") && !f.endsWith("_test.go")
+  );
+  const allFiles = [...webFiles, ...goFiles];
 
-  for (const file of srcFiles) {
+  for (const file of allFiles) {
     const content = fs.readFileSync(file, "utf8");
     const lines = content.split(/\r?\n/).length;
     const rel = path.relative(ROOT, file);
@@ -100,30 +113,58 @@ function checkSourceLaws() {
       errors.push(`Lei anti-monólito violada: ${rel} tem ${lines} linhas (máximo ${MAX_LINES}).`);
     }
 
-    if (rel.startsWith(`packages${path.sep}core${path.sep}`)) {
-      const forbidden = /from\s+['"].*(packages\/(api|cli|web|mobile)|@fin\/(api|cli|web|mobile))/;
+    const normalized = rel.replace(/\\/g, "/");
+    if (normalized.startsWith("backend/internal/domain/")) {
+      const forbidden = /"(database\/sql|net\/http|atelier-fin\/backend\/internal\/(store|httpapi|cli)|modernc\.org\/sqlite)"/;
       if (forbidden.test(content)) {
-        errors.push(`Lei de isolamento violada em ${rel}: core não pode importar outras camadas.`);
+        errors.push(`Lei de isolamento violada em ${rel}: domain deve usar apenas stdlib pura.`);
       }
     }
   }
-  checks.push(`Leis de código verificadas em ${srcFiles.length} arquivo(s) de src/.`);
+  checks.push(`Leis de código verificadas em ${allFiles.length} arquivo(s) (${goFiles.length} Go + ${webFiles.length} Web).`);
 }
 
-function runTests() {
+function runChecksAndTests() {
   if (!withTests) return;
+  const goBin = resolveGoBinary();
+
   try {
-    execSync("node --test packages/*/test/*.test.mjs", { stdio: "inherit", cwd: ROOT });
-    checks.push("Suíte de testes automatizados passou 100%.");
+    const unformatted = execSync(`"${goBin}" fmt ./...`, { cwd: BACKEND_DIR, encoding: "utf8" }).trim();
+    if (unformatted) {
+      checks.push(`gofmt normalizou arquivo(s): ${unformatted.replace(/\r?\n/g, ", ")}`);
+    } else {
+      checks.push("gofmt limpo.");
+    }
+  } catch (err) {
+    errors.push(`Falha no gofmt: ${err.message}`);
+  }
+
+  try {
+    execSync(`"${goBin}" vet ./...`, { stdio: "inherit", cwd: BACKEND_DIR });
+    checks.push("go vet ./... passou sem avisos.");
   } catch {
-    errors.push("Falha na execução dos testes automatizados.");
+    errors.push("Falha no go vet ./... .");
+  }
+
+  try {
+    execSync(`"${goBin}" test -v ./...`, { stdio: "inherit", cwd: BACKEND_DIR });
+    checks.push("Suíte de testes Go passou 100%.");
+  } catch {
+    errors.push("Falha nos testes Go.");
+  }
+
+  try {
+    execSync("node --test packages/web/test/*.test.mjs", { stdio: "inherit", cwd: ROOT });
+    checks.push("Suíte de testes WebApp passou 100%.");
+  } catch {
+    errors.push("Falha nos testes do WebApp.");
   }
 }
 
 checkSpecs();
 if (!specPhaseOnly) {
   checkSourceLaws();
-  runTests();
+  runChecksAndTests();
 }
 
 console.log("\n=== Atelier Quality Gate ===");

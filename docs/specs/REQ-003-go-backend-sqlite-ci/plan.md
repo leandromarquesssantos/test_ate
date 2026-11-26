@@ -1,7 +1,7 @@
 # Plano Técnico — REQ-003 (Backend/CLI em Go + SQLite + CI)
 
 - **Spec de referência:** `./spec.md`
-- **Status:** Pending Approval
+- **Status:** Approved
 
 ---
 
@@ -23,8 +23,10 @@ backend/
     │   └── domain_test.go
     ├── store/                     # SQLite ACID via modernc.org/sqlite (sem CGO)
     │   ├── sqlite.go              # Conexão, PRAGMA WAL/FK, schema migrations, legacy JSON import
-    │   ├── transactions.go        # CRUD transações + filtros combinados + transferências
-    │   ├── accounts_budgets.go    # Contas com saldo SQL/agregado + orçamentos
+    │   ├── transactions_write.go  # Add/Update/Delete transações e transferências
+    │   ├── transactions_query.go  # ListTransactions com filtros combinados e scanner
+    │   ├── accounts.go            # Contas com saldo agregado via SQL
+    │   ├── budgets.go             # Orçamentos, resumo mensal e exportação CSV
     │   ├── recurring.go           # Regras recorrentes + apply idempotente em transação SQL
     │   └── store_test.go
     ├── httpapi/                   # API REST + Static server seguro (net/http stdlib)

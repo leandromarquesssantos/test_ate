@@ -1,6 +1,6 @@
 # REQ-003 — Migração de Core, API e CLI para Go + SQLite (Pure Go) + CI
 
-- **Status:** Draft (Aguardando aprovação do Principal Engineer)
+- **Status:** Done (Aprovado e verificado em 2026-11-26)
 - **Autor:** Principal Engineer + Agente Atelier
 - **Data:** 2026-11-26
 - **Pré-requisito:** `REQ-001` e `REQ-002` concluídas
