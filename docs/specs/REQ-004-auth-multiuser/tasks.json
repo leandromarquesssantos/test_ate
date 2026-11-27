@@ -1,0 +1,49 @@
+{
+  "req": "REQ-004",
+  "title": "Autenticação, Sessões Seguras e Isolamento Multiusuário",
+  "status": "pending_approval",
+  "tasks": [
+    {
+      "id": "T-01",
+      "layer": "domain",
+      "title": "Adicionar modelos e validações de Auth em backend/internal/domain/auth.go com TDD",
+      "requirements": ["RF-01", "RF-02"],
+      "status": "pending"
+    },
+    {
+      "id": "T-02",
+      "layer": "store",
+      "title": "Implementar schema v2, migração v1->v2 sem perda, bcrypt, sessões SHA-256 e isolamento user_id em todas as queries com TDD",
+      "requirements": ["RF-01", "RF-02", "RF-03", "RF-04"],
+      "status": "pending"
+    },
+    {
+      "id": "T-03",
+      "layer": "httpapi",
+      "title": "Implementar rotas /api/auth/*, middleware RequireAuth (Cookie HttpOnly + Bearer) e RateLimiter (429) com testes HTTP anti-IDOR",
+      "requirements": ["RF-01", "RF-02", "RF-03", "RF-05"],
+      "status": "pending"
+    },
+    {
+      "id": "T-04",
+      "layer": "cli",
+      "title": "Atualizar CLI para suportar --user e subcomando users com testes automatizados",
+      "requirements": ["RF-03"],
+      "status": "pending"
+    },
+    {
+      "id": "T-05",
+      "layer": "web",
+      "title": "Implementar tela de Login/Cadastro e controle de sessão/logout no WebApp + testes",
+      "requirements": ["RF-06"],
+      "status": "pending"
+    },
+    {
+      "id": "T-06",
+      "layer": "review",
+      "title": "Rodar npm run gate completo, gerar review.md multi-perspectiva e integrar na main",
+      "requirements": ["RF-01", "RF-02", "RF-03", "RF-04", "RF-05", "RF-06"],
+      "status": "pending"
+    }
+  ]
+}
