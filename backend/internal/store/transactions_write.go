@@ -8,7 +8,7 @@ import (
 )
 
 func (s *SQLiteStore) AddTransaction(
-	txType string,
+	userID, txType string,
 	amount domain.Cents,
 	category, description, dateStr, accountID string,
 ) (domain.Transaction, error) {
@@ -31,9 +31,11 @@ func (s *SQLiteStore) AddTransaction(
 		return domain.Transaction{}, err
 	}
 	if strings.TrimSpace(accountID) == "" {
-		accountID = domain.DefaultAccountID
-	}
-	if err := s.ensureAccountExists(accountID); err != nil {
+		accountID, err = s.defaultAccountForUser(userID)
+		if err != nil {
+			return domain.Transaction{}, err
+		}
+	} else if err := s.ensureAccountExists(userID, accountID); err != nil {
 		return domain.Transaction{}, err
 	}
 
@@ -48,22 +50,22 @@ func (s *SQLiteStore) AddTransaction(
 		CreatedAt:   time.Now().UTC().Format(time.RFC3339Nano),
 	}
 	_, err = s.db.Exec(
-		`INSERT INTO transactions (id, type, amount_cents, category, description, date, account_id, to_account_id, recurring_rule_id, created_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?)`,
-		tx.ID, tx.Type, int64(tx.AmountCents), tx.Category, tx.Description, tx.Date, tx.AccountID, tx.CreatedAt,
+		`INSERT INTO transactions (id, user_id, type, amount_cents, category, description, date, account_id, to_account_id, recurring_rule_id, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?)`,
+		tx.ID, userID, tx.Type, int64(tx.AmountCents), tx.Category, tx.Description, tx.Date, tx.AccountID, tx.CreatedAt,
 	)
 	return tx, err
 }
 
 func (s *SQLiteStore) AddTransfer(
-	fromAccountID, toAccountID string,
+	userID, fromAccountID, toAccountID string,
 	amount domain.Cents,
 	description, dateStr string,
 ) (domain.Transaction, error) {
-	if err := s.ensureAccountExists(fromAccountID); err != nil {
+	if err := s.ensureAccountExists(userID, fromAccountID); err != nil {
 		return domain.Transaction{}, err
 	}
-	if err := s.ensureAccountExists(toAccountID); err != nil {
+	if err := s.ensureAccountExists(userID, toAccountID); err != nil {
 		return domain.Transaction{}, err
 	}
 	if fromAccountID == toAccountID {
@@ -94,15 +96,15 @@ func (s *SQLiteStore) AddTransfer(
 		CreatedAt:   time.Now().UTC().Format(time.RFC3339Nano),
 	}
 	_, err = s.db.Exec(
-		`INSERT INTO transactions (id, type, amount_cents, category, description, date, account_id, to_account_id, recurring_rule_id, created_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
-		tx.ID, tx.Type, int64(tx.AmountCents), tx.Category, tx.Description, tx.Date, tx.AccountID, toID, tx.CreatedAt,
+		`INSERT INTO transactions (id, user_id, type, amount_cents, category, description, date, account_id, to_account_id, recurring_rule_id, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
+		tx.ID, userID, tx.Type, int64(tx.AmountCents), tx.Category, tx.Description, tx.Date, tx.AccountID, toID, tx.CreatedAt,
 	)
 	return tx, err
 }
 
-func (s *SQLiteStore) UpdateTransaction(id string, patch domain.TxPatch) (domain.Transaction, error) {
-	tx, err := s.getTransactionByID(strings.TrimSpace(id))
+func (s *SQLiteStore) UpdateTransaction(userID, id string, patch domain.TxPatch) (domain.Transaction, error) {
+	tx, err := s.getTransactionByID(userID, strings.TrimSpace(id))
 	if err != nil {
 		return domain.Transaction{}, err
 	}
@@ -137,7 +139,7 @@ func (s *SQLiteStore) UpdateTransaction(id string, patch domain.TxPatch) (domain
 		tx.Date = d
 	}
 	if patch.AccountID != nil {
-		if err := s.ensureAccountExists(*patch.AccountID); err != nil {
+		if err := s.ensureAccountExists(userID, *patch.AccountID); err != nil {
 			return domain.Transaction{}, err
 		}
 		if tx.Type == "transfer" && tx.ToAccountID != nil && *tx.ToAccountID == *patch.AccountID {
@@ -147,17 +149,18 @@ func (s *SQLiteStore) UpdateTransaction(id string, patch domain.TxPatch) (domain
 	}
 
 	_, err = s.db.Exec(
-		`UPDATE transactions SET type=?, amount_cents=?, category=?, description=?, date=?, account_id=? WHERE id=?`,
-		tx.Type, int64(tx.AmountCents), tx.Category, tx.Description, tx.Date, tx.AccountID, tx.ID,
+		`UPDATE transactions SET type=?, amount_cents=?, category=?, description=?, date=?, account_id=?
+		 WHERE id=? AND user_id=?`,
+		tx.Type, int64(tx.AmountCents), tx.Category, tx.Description, tx.Date, tx.AccountID, tx.ID, userID,
 	)
 	return tx, err
 }
 
-func (s *SQLiteStore) DeleteTransaction(id string) (domain.Transaction, error) {
-	tx, err := s.getTransactionByID(strings.TrimSpace(id))
+func (s *SQLiteStore) DeleteTransaction(userID, id string) (domain.Transaction, error) {
+	tx, err := s.getTransactionByID(userID, strings.TrimSpace(id))
 	if err != nil {
 		return domain.Transaction{}, err
 	}
-	_, err = s.db.Exec(`DELETE FROM transactions WHERE id = ?`, tx.ID)
+	_, err = s.db.Exec(`DELETE FROM transactions WHERE id = ? AND user_id = ?`, tx.ID, userID)
 	return tx, err
 }

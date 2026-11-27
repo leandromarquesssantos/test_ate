@@ -7,9 +7,9 @@ import (
 	"atelier-fin/backend/internal/domain"
 )
 
-func (s *SQLiteStore) ListTransactions(filter domain.TxFilter) ([]domain.Transaction, error) {
-	conds := []string{"1=1"}
-	args := []any{}
+func (s *SQLiteStore) ListTransactions(userID string, filter domain.TxFilter) ([]domain.Transaction, error) {
+	conds := []string{"user_id = ?"}
+	args := []any{userID}
 
 	if filter.Month != "" {
 		m, err := domain.ValidateMonth(filter.Month)
@@ -63,13 +63,13 @@ func (s *SQLiteStore) ListTransactions(filter domain.TxFilter) ([]domain.Transac
 	return items, rows.Err()
 }
 
-func (s *SQLiteStore) getTransactionByID(id string) (domain.Transaction, error) {
+func (s *SQLiteStore) getTransactionByID(userID, id string) (domain.Transaction, error) {
 	if id == "" {
 		return domain.Transaction{}, domain.ValidationErrorf("ID da transação é obrigatório")
 	}
 	row := s.db.QueryRow(
 		`SELECT id, type, amount_cents, category, description, date, account_id, to_account_id, recurring_rule_id, created_at
-		 FROM transactions WHERE id = ?`, id,
+		 FROM transactions WHERE id = ? AND user_id = ?`, id, userID,
 	)
 	tx, err := scanTransaction(row)
 	if err == sql.ErrNoRows {
