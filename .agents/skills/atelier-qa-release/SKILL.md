@@ -1,25 +1,29 @@
 ---
 name: atelier-qa-release
 description: >-
-  Use this skill as Phase 5 (Release QA) after atelier-code-review and npm run gate,
-  before merging a feature/release to main. Runs real headless-browser E2E journeys
-  and release checklists as an independent QA agent, producing qa-report.md.
+  Phase 5 Independent Release QA: runs npm run gate:release (real headless browser
+  E2E + layout overflow + Go/Web tests) and writes consolidated release-audit.md.
 ---
 
-# Atelier — Fase 5: Agente QA de Release
+# Atelier Lean — Fase 5: Auditoria Independente de Release (Review + QA E2E)
 
-## Papel
-Você atua como **Engenheiro de QA independente**. Sua missão é tentar **quebrar a release** como um usuário real — nunca confie apenas em testes unitários ou regex de HTML.
+Atue como **Engenheiro de QA e Revisor independente** (preferencialmente via subagente com contexto limpo).
 
-## Passos Obrigatórios
-1. **Executar a suíte E2E real no navegador (`npm run qa`):**
-   - Sobe uma instância isolada do servidor Go + SQLite temporário.
-   - Abre o WebApp em Chromium headless real (CDP) validando CSS computado (`getComputedStyle`), cookies `HttpOnly`, fluxos de Cadastro → Dashboard → CRUD/Edição/Orçamento/Recorrentes/Filtros → Logout → Login e **zero erros de console/JS**.
-2. **Validar regressões e critérios de aceite da REQ:**
-   - Leia `docs/specs/REQ-XXX-<slug>/spec.md` e confira cada `RF-XX` na aplicação real.
-3. **Executar Quality Gate completo de Release (`npm run gate:release`):**
-   - Confirma `gofmt`, `go vet`, testes Go, testes WebApp, leis arquiteturais **e** E2E QA verde.
-4. **Emitir parecer em `docs/specs/REQ-XXX-<slug>/qa-report.md`:**
-   - Use o template [qa-report.template.md](./resources/qa-report.template.md).
-   - Veredito explícito: **`APPROVED FOR RELEASE`** ou **`REJECTED (BLOCKERS FOUND)`**.
-   - Se encontrar qualquer falha visual, de fluxo, console error ou regressão, **bloqueie a release** e reporte passos exatos de reprodução.
+## Passos
+1. Leia `docs/specs/REQ-XXX-<slug>/spec.md` e inspecione o diff dos arquivos alterados sob as 4 lentes (`Arquitetura`, `Segurança`, `Corretude`, `Simplicidade`).
+2. Execute `npm run gate:release` (roda `gofmt`, `go vet`, `go test -count=1 ./...`, testes WebApp e Chromium headless E2E com auditoria geométrica desktop/mobile + zero erros de console).
+3. Gere um único `docs/specs/REQ-XXX-<slug>/release-audit.md` objetivo (<= 60 linhas, sem copiar texto da spec):
+
+```markdown
+# Release Audit — REQ-XXX
+- **Data:** YYYY-MM-DD | **Veredito:** APPROVED FOR RELEASE | REJECTED
+
+## 1. Lentes de Código (Arch / Sec / Correctness / Simplicity)
+- Resumo objetivo (`0 blockers`, eventuais notas).
+
+## 2. Rastreabilidade & QA E2E (`npm run gate:release`)
+| ID / Check | Evidência Automatizada | Status |
+| :--- | :--- | :--- |
+| `RF-01..RF-NN` | Testes Go / Web / E2E correspondentes | PASS |
+| `QA Headless` | `npm run gate:release` (fluxos + layout + console=0) | PASS |
+```

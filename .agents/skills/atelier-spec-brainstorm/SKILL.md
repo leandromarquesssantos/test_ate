@@ -1,28 +1,30 @@
 ---
 name: atelier-spec-brainstorm
 description: >-
-  Use this skill when starting Substantial Work (a new feature, architecture change,
-  or multi-surface capability) to produce a durable specification document (spec.md)
-  before any technical planning or code implementation.
+  Phase 1 of Substantial Work: produces a concise, testable specification
+  (docs/specs/REQ-XXX-<slug>/spec.md) without extra template reads.
 ---
 
-# Atelier — Fase 1: Spec Brainstorm
+# Atelier Lean — Fase 1: Spec Brainstorm
 
-## Objetivo
-Transformar uma ideia ou pedido em uma especificação clara, verificável e versionada em `docs/specs/REQ-XXX-<slug>/spec.md`, sem pular para código.
+Crie `docs/specs/REQ-XXX-<slug>/spec.md` enxuto (<= 90 linhas, zero prosa redundante) seguindo exatamente esta estrutura:
 
-## Passos
-1. Identifique o próximo número `REQ-XXX` disponível em `docs/specs/`.
-2. Leia o template em [spec.template.md](./resources/spec.template.md).
-3. Defina com clareza:
-   - **Problema e Objetivo** (*por quê* e *para quem*).
-   - **Escopo (In-Scope)** e **Não-Escopo (Out-of-Scope)** explícitos para evitar *scope creep*.
-   - **Requisitos Funcionais** numerados (`RF-01`, `RF-02`...) com critérios de aceite testáveis (estilo Given/When/Then).
-   - **Requisitos Não-Funcionais e Restrições** (precisão monetária, segurança, offline/mobile, performance).
-   - **Decisões em Aberto** que precisam de validação do Principal Engineer.
-4. Salve em `docs/specs/REQ-XXX-<slug>/spec.md`.
+```markdown
+# REQ-XXX — <Título>
+- **Status:** Draft | Approved | Done | **Data:** YYYY-MM-DD
 
-## Validação
-- Todos os requisitos possuem critérios de aceite objetivos e verificáveis por testes.
-- Existe seção explícita de **Fora de Escopo**.
-- Nenhum código de produção foi alterado nesta fase.
+## 1. Problema & Valor
+<2–4 linhas diretas>
+
+## 2. Escopo & Não-Escopo
+- **In-Scope:** ...
+- **Out-of-Scope:** ...
+
+## 3. Requisitos Funcionais (Critérios Testáveis)
+- **RF-01 (<Nome>):** Dado <X>, quando <Y>, então <Z>.
+
+## 4. Restrições & Decisões em Aberto
+- Leis aplicáveis / Decisões pendentes para o Principal Engineer.
+```
+
+**Regras:** Nenhum código de produção é tocado nesta fase. Critérios devem ser objetivamente verificáveis por testes.

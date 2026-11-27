@@ -1,28 +1,38 @@
 ---
 name: atelier-spec-plan
 description: >-
-  Use this skill after a spec.md exists to design the technical architecture,
-  file map, data contracts, and granular task list (plan.md and tasks.json)
-  before writing any production code.
+  Phase 2 of Substantial Work: creates concise plan.md and tasks.json referencing
+  RF-XX IDs without duplicating spec prose, then stops for human approval.
 ---
 
-# Atelier — Fase 2: Arquitetura e Planejamento
+# Atelier Lean — Fase 2: Arquitetura e Planejamento
 
-## Objetivo
-Traduzir `spec.md` em um plano técnico detalhado (`plan.md`) e uma lista de tarefas verificáveis (`tasks.json`) para aprovação do Principal Engineer.
+Leia `spec.md` da REQ e gere `plan.md` + `tasks.json` no mesmo turno (paralelo), **referenciando `RF-XX` por ID sem copiar o texto da spec**:
 
-## Passos
-1. Leia `docs/specs/REQ-XXX-<slug>/spec.md` integralmente.
-2. Leia o template em [plan.template.md](./resources/plan.template.md).
-3. Mapeie:
-   - **Arquitetura e fronteiras entre módulos** (respeitando as leis de `AGENTS.md`).
-   - **Contratos de dados e APIs** (schemas, endpoints, comandos CLI).
-   - **Mapa de arquivos** a criar/alterar (mantendo cada arquivo <= 220 linhas).
-   - **Estratégia de testes (TDD)** mapeando cada `RF-XX` para testes automatizados.
-   - **Riscos e Mitigações**.
-4. Crie `plan.md` e `tasks.json` no diretório da REQ.
-5. **Pare no Gate de Aprovação Humana** e apresente um resumo objetivo das decisões ao Principal Engineer.
+### Formato de `plan.md` (<= 80 linhas)
+```markdown
+# Plano Técnico — REQ-XXX
+- **Spec:** `./spec.md` | **Status:** Pending Approval | Approved
 
-## Validação
-- Cada requisito `RF-XX` da spec está coberto por pelo menos uma tarefa em `tasks.json` e um teste planejado.
-- O plano respeita todas as leis de `AGENTS.md`.
+## 1. Fronteiras & Contratos
+- Modelos, endpoints REST, CLI e regras de isolamento (`AGENTS.md`).
+
+## 2. Mapa de Arquivos (meta <= 220 linhas/arquivo)
+| Arquivo | Mudança / Responsabilidade | RFs |
+| :--- | :--- | :--- |
+
+## 3. Matriz TDD & Riscos
+- Mapeamento `RF-XX -> arquivo de teste` e principais mitigações.
+```
+
+### Formato de `tasks.json`
+```json
+{
+  "req": "REQ-XXX",
+  "tasks": [
+    { "id": "T1", "title": "Curto e objetivo (RFs cobertos)", "status": "pending" }
+  ]
+}
+```
+
+Valide com `npm run gate:spec` e **pare aguardando aprovação explícita do Principal Engineer**.
