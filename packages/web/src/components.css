@@ -95,3 +95,21 @@
     grid-template-columns: 1fr;
   }
 }
+
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+}
+.auth-card {
+  width: 100%;
+  max-width: 410px;
+  display: grid;
+  gap: 0.9rem;
+}
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}

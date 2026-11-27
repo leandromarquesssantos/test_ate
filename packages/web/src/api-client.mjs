@@ -32,15 +32,25 @@ function buildQuery(params = {}) {
 
 async function request(path, options = {}) {
   const res = await fetch(path, {
+    credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     ...options
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? "Falha na requisição.");
+  if (!res.ok) {
+    const err = new Error(data.error ?? "Falha na requisição.");
+    err.status = res.status;
+    throw err;
+  }
   return data;
 }
 
 export const apiClient = {
+  me: () => request("/api/auth/me"),
+  login: (payload) => request("/api/auth/login", { method: "POST", body: JSON.stringify(payload) }),
+  register: (payload) =>
+    request("/api/auth/register", { method: "POST", body: JSON.stringify(payload) }),
+  logout: () => request("/api/auth/logout", { method: "POST" }),
   getSummary: (month) => request(`/api/summary${buildQuery({ month })}`),
   listTransactions: (filters) => request(`/api/transactions${buildQuery(filters)}`),
   addTransaction: (payload) =>
