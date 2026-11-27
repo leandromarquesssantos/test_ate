@@ -9,7 +9,6 @@
   background: rgba(244, 63, 94, 0.15);
   border-color: rgba(244, 63, 94, 0.5);
 }
-.hidden { display: none; }
 
 .section-head {
   display: flex;
@@ -113,3 +112,5 @@
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
 }
+
+.hidden { display: none !important; }

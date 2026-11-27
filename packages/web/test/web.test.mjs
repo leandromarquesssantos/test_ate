@@ -47,4 +47,7 @@ test("RF-06: assets essenciais do WebApp REQ-002 existem e contêm controles esp
   assert.match(html, /id="recurring-form"/);
   assert.match(html, /id="auth-form"/);
   assert.match(html, /id="logout-btn"/);
+
+  const css = fs.readFileSync(path.resolve(__dirname, "../src/components.css"), "utf8");
+  assert.match(css, /\.hidden\s*\{\s*display:\s*none\s*!important;/);
 });
