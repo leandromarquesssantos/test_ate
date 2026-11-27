@@ -65,3 +65,21 @@ func TestCSVFormulaInjectionProtection(t *testing.T) {
 		t.Fatalf("CSV did not neutralize/escape formula: %s", csv)
 	}
 }
+
+func TestAuthValidation(t *testing.T) {
+	if email, err := NormalizeEmail("  Alice@Example.COM "); err != nil || email != "alice@example.com" {
+		t.Fatalf("NormalizeEmail = (%q, %v)", email, err)
+	}
+	if _, err := NormalizeEmail("invalido"); !errors.Is(err, ErrValidation) {
+		t.Fatalf("expected invalid email error, got %v", err)
+	}
+	if err := ValidatePassword("curta"); !errors.Is(err, ErrValidation) {
+		t.Fatalf("expected short password error, got %v", err)
+	}
+	if err := ValidatePassword(strings.Repeat("a", 73)); !errors.Is(err, ErrValidation) {
+		t.Fatalf("expected >72 byte password error, got %v", err)
+	}
+	if err := ValidatePassword("senha-valida-123"); err != nil {
+		t.Fatalf("expected valid password, got %v", err)
+	}
+}

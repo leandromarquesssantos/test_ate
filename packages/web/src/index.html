@@ -8,154 +8,188 @@
     <link rel="stylesheet" href="/components.css" />
   </head>
   <body>
-    <header class="topbar">
-      <div class="brand">
-        <span class="badge">ATELIER</span>
-        <h1>Atelier Fin</h1>
-      </div>
-      <div class="topbar-actions">
-        <label class="month-picker">
-          <span>Mês</span>
-          <input id="month-input" type="month" />
-        </label>
-        <button id="export-csv-btn" type="button" class="btn-secondary">Exportar CSV</button>
-      </div>
-    </header>
-
-    <main class="container">
-      <section class="kpi-grid" aria-label="Resumo financeiro">
-        <article class="card kpi">
-          <span class="label">Saldo do mês</span>
-          <strong id="kpi-balance" class="value">R$ 0,00</strong>
-        </article>
-        <article class="card kpi income">
-          <span class="label">Receitas</span>
-          <strong id="kpi-income" class="value">R$ 0,00</strong>
-        </article>
-        <article class="card kpi expense">
-          <span class="label">Despesas</span>
-          <strong id="kpi-expense" class="value">R$ 0,00</strong>
-        </article>
-      </section>
-
-      <div id="status-banner" class="banner hidden" role="status"></div>
-
-      <section class="card">
-        <div class="section-head">
-          <h2>Contas &amp; Carteiras</h2>
-          <span class="muted">Saldo acumulado por conta</span>
+    <section id="auth-view" class="auth-shell hidden">
+      <article class="card auth-card">
+        <div class="brand">
+          <span class="badge">ATELIER</span>
+          <h1>Atelier Fin</h1>
         </div>
-        <div id="accounts-list" class="accounts-grid"></div>
-        <div class="split-forms">
-          <form id="account-form" class="row compact-form">
-            <input name="name" type="text" placeholder="Nova conta (ex: Carteira)" required />
-            <select name="type">
-              <option value="checking">Conta Corrente</option>
-              <option value="cash">Dinheiro</option>
-              <option value="savings">Poupança</option>
-              <option value="credit">Cartão</option>
-            </select>
-            <button type="submit" class="btn-secondary">Criar conta</button>
-          </form>
-          <form id="transfer-form" class="row transfer-form">
-            <select name="fromAccountId" data-account-select required></select>
-            <select name="toAccountId" data-account-select required></select>
-            <input name="amount" type="text" placeholder="Valor R$" required />
-            <button type="submit" class="btn-secondary">Transferir</button>
-          </form>
+        <p class="muted">Gestão financeira segura com sessões isoladas por usuário.</p>
+        <div class="auth-tabs" role="tablist">
+          <button id="tab-login" type="button" class="btn-primary">Entrar</button>
+          <button id="tab-register" type="button" class="btn-ghost">Criar conta</button>
         </div>
-      </section>
-
-      <section class="workspace-grid">
-        <article class="card">
-          <div class="section-head">
-            <h2 id="tx-form-title">Novo Lançamento</h2>
-            <button id="cancel-edit-btn" type="button" class="btn-ghost hidden">Cancelar edição</button>
-          </div>
-          <form id="tx-form" class="stack">
-            <input name="editId" type="hidden" />
-            <div class="row">
-              <label>Tipo
-                <select name="type" required>
-                  <option value="expense">Despesa</option>
-                  <option value="income">Receita</option>
-                </select>
-              </label>
-              <label>Valor (R$)
-                <input name="amount" type="text" placeholder="49,90" required />
-              </label>
-            </div>
-            <div class="row">
-              <label>Categoria
-                <input name="category" type="text" placeholder="alimentacao" required />
-              </label>
-              <label>Conta
-                <select name="accountId" data-account-select required></select>
-              </label>
-            </div>
-            <div class="row">
-              <label>Data
-                <input name="date" type="date" required />
-              </label>
-              <label>Descrição
-                <input name="description" type="text" placeholder="Ex: Supermercado" maxlength="140" />
-              </label>
-            </div>
-            <button id="tx-submit-btn" type="submit" class="btn-primary">Adicionar transação</button>
-          </form>
-        </article>
-
-        <article class="card">
-          <h2>Orçamento Mensal</h2>
-          <form id="budget-form" class="row compact-form">
-            <input name="category" type="text" placeholder="Categoria" required />
-            <input name="limit" type="text" placeholder="Limite R$" required />
-            <button type="submit" class="btn-secondary">Salvar</button>
-          </form>
-          <div id="budgets-list" class="budgets-list"></div>
-        </article>
-      </section>
-
-      <section class="card">
-        <div class="section-head">
-          <h2>Lançamentos Recorrentes</h2>
-          <button id="apply-recurring-btn" type="button" class="btn-primary">Gerar recorrentes do mês</button>
-        </div>
-        <form id="recurring-form" class="recurring-form">
-          <select name="type">
-            <option value="expense">Despesa</option>
-            <option value="income">Receita</option>
-          </select>
-          <input name="amount" type="text" placeholder="Valor R$" required />
-          <input name="category" type="text" placeholder="Categoria" required />
-          <input name="description" type="text" placeholder="Descrição (ex: Aluguel)" />
-          <input name="dayOfMonth" type="number" min="1" max="31" value="5" required />
-          <select name="accountId" data-account-select required></select>
-          <button type="submit" class="btn-secondary">Adicionar regra</button>
+        <div id="auth-error" class="banner error hidden" role="alert"></div>
+        <form id="auth-form" class="stack">
+          <label id="auth-name-field" class="hidden">
+            Nome
+            <input name="name" type="text" placeholder="Seu nome" autocomplete="name" />
+          </label>
+          <label>
+            E-mail
+            <input name="email" type="email" placeholder="voce@exemplo.com" required autocomplete="email" />
+          </label>
+          <label>
+            Senha
+            <input name="password" type="password" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="current-password" />
+          </label>
+          <button id="auth-submit-btn" type="submit" class="btn-primary">Entrar</button>
         </form>
-        <div id="recurring-list" class="tx-list"></div>
-      </section>
+      </article>
+    </section>
 
-      <section class="card">
-        <div class="section-head">
-          <h2>Transações do Mês</h2>
-          <span id="tx-count" class="muted">0 lançamentos</span>
+    <div id="app-view" class="hidden">
+      <header class="topbar">
+        <div class="brand">
+          <span class="badge">ATELIER</span>
+          <h1>Atelier Fin</h1>
         </div>
-        <div class="filter-bar">
-          <input id="filter-q" type="search" placeholder="Buscar por descrição ou categoria..." />
-          <select id="filter-type">
-            <option value="">Todos os tipos</option>
-            <option value="expense">Despesas</option>
-            <option value="income">Receitas</option>
-            <option value="transfer">Transferências</option>
-          </select>
-          <select id="filter-account">
-            <option value="">Todas as contas</option>
-          </select>
+        <div class="topbar-actions">
+          <span id="user-name" class="muted"></span>
+          <label class="month-picker">
+            <span>Mês</span>
+            <input id="month-input" type="month" />
+          </label>
+          <button id="export-csv-btn" type="button" class="btn-secondary">Exportar CSV</button>
+          <button id="logout-btn" type="button" class="btn-ghost">Sair</button>
         </div>
-        <div id="tx-list" class="tx-list"></div>
-      </section>
-    </main>
+      </header>
+
+      <main class="container">
+        <section class="kpi-grid" aria-label="Resumo financeiro">
+          <article class="card kpi">
+            <span class="label">Saldo do mês</span>
+            <strong id="kpi-balance" class="value">R$ 0,00</strong>
+          </article>
+          <article class="card kpi income">
+            <span class="label">Receitas</span>
+            <strong id="kpi-income" class="value">R$ 0,00</strong>
+          </article>
+          <article class="card kpi expense">
+            <span class="label">Despesas</span>
+            <strong id="kpi-expense" class="value">R$ 0,00</strong>
+          </article>
+        </section>
+
+        <div id="status-banner" class="banner hidden" role="status"></div>
+
+        <section class="card">
+          <div class="section-head">
+            <h2>Contas &amp; Carteiras</h2>
+            <span class="muted">Saldo acumulado por conta</span>
+          </div>
+          <div id="accounts-list" class="accounts-grid"></div>
+          <div class="split-forms">
+            <form id="account-form" class="row compact-form">
+              <input name="name" type="text" placeholder="Nova conta (ex: Carteira)" required />
+              <select name="type">
+                <option value="checking">Conta Corrente</option>
+                <option value="cash">Dinheiro</option>
+                <option value="savings">Poupança</option>
+                <option value="credit">Cartão</option>
+              </select>
+              <button type="submit" class="btn-secondary">Criar conta</button>
+            </form>
+            <form id="transfer-form" class="row transfer-form">
+              <select name="fromAccountId" data-account-select required></select>
+              <select name="toAccountId" data-account-select required></select>
+              <input name="amount" type="text" placeholder="Valor R$" required />
+              <button type="submit" class="btn-secondary">Transferir</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="workspace-grid">
+          <article class="card">
+            <div class="section-head">
+              <h2 id="tx-form-title">Novo Lançamento</h2>
+              <button id="cancel-edit-btn" type="button" class="btn-ghost hidden">Cancelar edição</button>
+            </div>
+            <form id="tx-form" class="stack">
+              <input name="editId" type="hidden" />
+              <div class="row">
+                <label>Tipo
+                  <select name="type" required>
+                    <option value="expense">Despesa</option>
+                    <option value="income">Receita</option>
+                  </select>
+                </label>
+                <label>Valor (R$)
+                  <input name="amount" type="text" placeholder="49,90" required />
+                </label>
+              </div>
+              <div class="row">
+                <label>Categoria
+                  <input name="category" type="text" placeholder="alimentacao" required />
+                </label>
+                <label>Conta
+                  <select name="accountId" data-account-select required></select>
+                </label>
+              </div>
+              <div class="row">
+                <label>Data
+                  <input name="date" type="date" required />
+                </label>
+                <label>Descrição
+                  <input name="description" type="text" placeholder="Ex: Supermercado" maxlength="140" />
+                </label>
+              </div>
+              <button id="tx-submit-btn" type="submit" class="btn-primary">Adicionar transação</button>
+            </form>
+          </article>
+
+          <article class="card">
+            <h2>Orçamento Mensal</h2>
+            <form id="budget-form" class="row compact-form">
+              <input name="category" type="text" placeholder="Categoria" required />
+              <input name="limit" type="text" placeholder="Limite R$" required />
+              <button type="submit" class="btn-secondary">Salvar</button>
+            </form>
+            <div id="budgets-list" class="budgets-list"></div>
+          </article>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <h2>Lançamentos Recorrentes</h2>
+            <button id="apply-recurring-btn" type="button" class="btn-primary">Gerar recorrentes do mês</button>
+          </div>
+          <form id="recurring-form" class="recurring-form">
+            <select name="type">
+              <option value="expense">Despesa</option>
+              <option value="income">Receita</option>
+            </select>
+            <input name="amount" type="text" placeholder="Valor R$" required />
+            <input name="category" type="text" placeholder="Categoria" required />
+            <input name="description" type="text" placeholder="Descrição (ex: Aluguel)" />
+            <input name="dayOfMonth" type="number" min="1" max="31" value="5" required />
+            <select name="accountId" data-account-select required></select>
+            <button type="submit" class="btn-secondary">Adicionar regra</button>
+          </form>
+          <div id="recurring-list" class="tx-list"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <h2>Transações do Mês</h2>
+            <span id="tx-count" class="muted">0 lançamentos</span>
+          </div>
+          <div class="filter-bar">
+            <input id="filter-q" type="search" placeholder="Buscar por descrição ou categoria..." />
+            <select id="filter-type">
+              <option value="">Todos os tipos</option>
+              <option value="expense">Despesas</option>
+              <option value="income">Receitas</option>
+              <option value="transfer">Transferências</option>
+            </select>
+            <select id="filter-account">
+              <option value="">Todas as contas</option>
+            </select>
+          </div>
+          <div id="tx-list" class="tx-list"></div>
+        </section>
+      </main>
+    </div>
 
     <script type="module" src="/app.mjs"></script>
   </body>

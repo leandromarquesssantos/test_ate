@@ -8,8 +8,8 @@ import (
 )
 
 func registerExtraRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
-	mux.HandleFunc("GET /api/accounts", func(w http.ResponseWriter, _ *http.Request) {
-		items, err := s.ListAccounts()
+	mux.HandleFunc("GET /api/accounts", func(w http.ResponseWriter, r *http.Request) {
+		items, err := s.ListAccounts(userFromContext(r).ID)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -25,7 +25,7 @@ func registerExtraRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 		}
 		name, _ := strField(body, "name")
 		accType, _ := strField(body, "type")
-		created, err := s.AddAccount(name, accType)
+		created, err := s.AddAccount(userFromContext(r).ID, name, accType)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -34,7 +34,7 @@ func registerExtraRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 	})
 
 	mux.HandleFunc("DELETE /api/accounts/{id}", func(w http.ResponseWriter, r *http.Request) {
-		removed, err := s.DeleteAccount(r.PathValue("id"))
+		removed, err := s.DeleteAccount(userFromContext(r).ID, r.PathValue("id"))
 		if err != nil {
 			writeError(w, err)
 			return
@@ -61,7 +61,7 @@ func registerExtraRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 		toID, _ := strField(body, "toAccountId")
 		desc, _ := strField(body, "description")
 		dateStr, _ := strField(body, "date")
-		created, err := s.AddTransfer(fromID, toID, amount, desc, dateStr)
+		created, err := s.AddTransfer(userFromContext(r).ID, fromID, toID, amount, desc, dateStr)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -69,8 +69,8 @@ func registerExtraRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 		writeJSON(w, http.StatusCreated, created)
 	})
 
-	mux.HandleFunc("GET /api/recurring", func(w http.ResponseWriter, _ *http.Request) {
-		items, err := s.ListRecurring()
+	mux.HandleFunc("GET /api/recurring", func(w http.ResponseWriter, r *http.Request) {
+		items, err := s.ListRecurring(userFromContext(r).ID)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -102,7 +102,7 @@ func registerExtraRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 		cat, _ := strField(body, "category")
 		desc, _ := strField(body, "description")
 		accID, _ := strField(body, "accountId")
-		created, err := s.AddRecurring(txType, amount, cat, desc, day, accID)
+		created, err := s.AddRecurring(userFromContext(r).ID, txType, amount, cat, desc, day, accID)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -117,7 +117,7 @@ func registerExtraRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 			return
 		}
 		month, _ := strField(body, "month")
-		res, err := s.ApplyRecurring(month)
+		res, err := s.ApplyRecurring(userFromContext(r).ID, month)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -126,7 +126,7 @@ func registerExtraRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 	})
 
 	mux.HandleFunc("DELETE /api/recurring/{id}", func(w http.ResponseWriter, r *http.Request) {
-		removed, err := s.DeleteRecurring(r.PathValue("id"))
+		removed, err := s.DeleteRecurring(userFromContext(r).ID, r.PathValue("id"))
 		if err != nil {
 			writeError(w, err)
 			return

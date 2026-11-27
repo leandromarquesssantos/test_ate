@@ -1,6 +1,6 @@
 # REQ-004 — Autenticação, Sessões Seguras e Isolamento Multiusuário
 
-- **Status:** Draft (Aguardando aprovação do Principal Engineer)
+- **Status:** Done (Aprovado e verificado em 2026-11-26)
 - **Autor:** Principal Engineer + Agente Atelier
 - **Data:** 2026-11-26
 - **Pré-requisito:** `REQ-003` (Backend Go + SQLite + CI) concluída

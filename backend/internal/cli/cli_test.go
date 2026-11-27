@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"atelier-fin/backend/internal/domain"
 	"atelier-fin/backend/internal/store"
 )
 
@@ -15,6 +14,17 @@ func TestCLIEndToEnd(t *testing.T) {
 		t.Fatalf("OpenSQLite: %v", err)
 	}
 	defer func() { _ = s.Close() }()
+
+	regOut, err := Run([]string{"users", "register", "--name", "Alice", "--email", "alice@cli.test", "--password", "senha1234"}, s)
+	if err != nil || !strings.Contains(regOut, "Usuário criado: usr_") {
+		t.Fatalf("users register = (%q, %v)", regOut, err)
+	}
+
+	accListOut, err := Run([]string{"accounts", "list"}, s)
+	if err != nil {
+		t.Fatalf("accounts list: %v", err)
+	}
+	mainAccID := regexp.MustCompile(`acc_[a-f0-9]+`).FindString(accListOut)
 
 	out, err := Run([]string{"add", "--type", "income", "--amount", "4500,00", "--category", "salario", "--desc", "Mensal", "--date", "2026-11-01"}, s)
 	if err != nil || !strings.Contains(out, "Transação criada: tx_") {
@@ -38,7 +48,7 @@ func TestCLIEndToEnd(t *testing.T) {
 	}
 	walletID := regexp.MustCompile(`acc_[a-f0-9]+`).FindString(accOut)
 
-	trOut, err := Run([]string{"transfer", "--from", domain.DefaultAccountID, "--to", walletID, "--amount", "200"}, s)
+	trOut, err := Run([]string{"transfer", "--from", mainAccID, "--to", walletID, "--amount", "200"}, s)
 	if err != nil || !strings.Contains(trOut, "Transferência criada") {
 		t.Fatalf("transfer = (%q, %v)", trOut, err)
 	}

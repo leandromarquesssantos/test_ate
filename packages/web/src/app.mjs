@@ -7,6 +7,7 @@ import {
   syncAccountSelects
 } from "./render.mjs";
 import { bindSecondaryHandlers } from "./handlers.mjs";
+import { initAuthUI } from "./auth-ui.mjs";
 
 const $ = (id) => document.getElementById(id);
 const monthInput = $("month-input");
@@ -67,6 +68,8 @@ function startEdit(tx) {
   txForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
+let authUI;
+
 async function refresh() {
   const filters = currentFilters();
   try {
@@ -88,6 +91,10 @@ async function refresh() {
     $("tx-count").textContent = `${txData.items.length} lançamento(s)`;
     $("tx-list").innerHTML = renderTransactionsHtml(txData.items, accMap);
   } catch (err) {
+    if (err.status === 401) {
+      authUI.showAuth("Sua sessão expirou. Entre novamente.");
+      return;
+    }
     showMessage(err.message, true);
   }
 }
@@ -98,6 +105,10 @@ async function runAction(fn, okMsg) {
     if (okMsg) showMessage(typeof okMsg === "function" ? okMsg(result) : okMsg);
     await refresh();
   } catch (err) {
+    if (err.status === 401) {
+      authUI.showAuth("Sua sessão expirou. Entre novamente.");
+      return;
+    }
     showMessage(err.message, true);
   }
 }
@@ -143,4 +154,16 @@ bindSecondaryHandlers({ $, getMonth, todayLocal, currentFilters, runAction });
 [monthInput, filterQ, filterType, filterAccount].forEach((el) =>
   el.addEventListener("input", refresh)
 );
-refresh();
+
+authUI = initAuthUI({
+  $,
+  onAuthenticated: () => {
+    banner.classList.add("hidden");
+    refresh();
+  },
+  onSignedOut: () => {
+    lastItems = [];
+    resetTxForm();
+  }
+});
+authUI.bootstrap();

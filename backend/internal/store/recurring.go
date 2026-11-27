@@ -8,10 +8,11 @@ import (
 	"atelier-fin/backend/internal/domain"
 )
 
-func (s *SQLiteStore) ListRecurring() ([]domain.RecurringRule, error) {
+func (s *SQLiteStore) ListRecurring(userID string) ([]domain.RecurringRule, error) {
 	rows, err := s.db.Query(
 		`SELECT id, type, amount_cents, category, description, day_of_month, account_id
-		 FROM recurring_rules ORDER BY day_of_month ASC, category ASC`,
+		 FROM recurring_rules WHERE user_id = ? ORDER BY day_of_month ASC, category ASC`,
+		userID,
 	)
 	if err != nil {
 		return nil, err
@@ -32,7 +33,7 @@ func (s *SQLiteStore) ListRecurring() ([]domain.RecurringRule, error) {
 }
 
 func (s *SQLiteStore) AddRecurring(
-	txType string,
+	userID, txType string,
 	amount domain.Cents,
 	category, description string,
 	dayOfMonth int,
@@ -54,9 +55,11 @@ func (s *SQLiteStore) AddRecurring(
 		return domain.RecurringRule{}, err
 	}
 	if strings.TrimSpace(accountID) == "" {
-		accountID = domain.DefaultAccountID
-	}
-	if err := s.ensureAccountExists(accountID); err != nil {
+		accountID, err = s.defaultAccountForUser(userID)
+		if err != nil {
+			return domain.RecurringRule{}, err
+		}
+	} else if err := s.ensureAccountExists(userID, accountID); err != nil {
 		return domain.RecurringRule{}, err
 	}
 
@@ -70,14 +73,14 @@ func (s *SQLiteStore) AddRecurring(
 		AccountID:   accountID,
 	}
 	_, err = s.db.Exec(
-		`INSERT INTO recurring_rules (id, type, amount_cents, category, description, day_of_month, account_id)
-		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		rule.ID, rule.Type, int64(rule.AmountCents), rule.Category, rule.Description, rule.DayOfMonth, rule.AccountID,
+		`INSERT INTO recurring_rules (id, user_id, type, amount_cents, category, description, day_of_month, account_id)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		rule.ID, userID, rule.Type, int64(rule.AmountCents), rule.Category, rule.Description, rule.DayOfMonth, rule.AccountID,
 	)
 	return rule, err
 }
 
-func (s *SQLiteStore) DeleteRecurring(id string) (domain.RecurringRule, error) {
+func (s *SQLiteStore) DeleteRecurring(userID, id string) (domain.RecurringRule, error) {
 	trimmed := strings.TrimSpace(id)
 	if trimmed == "" {
 		return domain.RecurringRule{}, domain.ValidationErrorf("ID da recorrência é obrigatório")
@@ -86,7 +89,7 @@ func (s *SQLiteStore) DeleteRecurring(id string) (domain.RecurringRule, error) {
 	var amount int64
 	err := s.db.QueryRow(
 		`SELECT id, type, amount_cents, category, description, day_of_month, account_id
-		 FROM recurring_rules WHERE id = ?`, trimmed,
+		 FROM recurring_rules WHERE id = ? AND user_id = ?`, trimmed, userID,
 	).Scan(&r.ID, &r.Type, &amount, &r.Category, &r.Description, &r.DayOfMonth, &r.AccountID)
 	if err == sql.ErrNoRows {
 		return domain.RecurringRule{}, domain.NotFoundErrorf("recorrência não encontrada: %q", id)
@@ -95,11 +98,11 @@ func (s *SQLiteStore) DeleteRecurring(id string) (domain.RecurringRule, error) {
 		return domain.RecurringRule{}, err
 	}
 	r.AmountCents = domain.Cents(amount)
-	_, err = s.db.Exec(`DELETE FROM recurring_rules WHERE id = ?`, r.ID)
+	_, err = s.db.Exec(`DELETE FROM recurring_rules WHERE id = ? AND user_id = ?`, r.ID, userID)
 	return r, err
 }
 
-func (s *SQLiteStore) ApplyRecurring(month string) (domain.ApplyRecurringResult, error) {
+func (s *SQLiteStore) ApplyRecurring(userID, month string) (domain.ApplyRecurringResult, error) {
 	if strings.TrimSpace(month) == "" {
 		month = domain.CurrentMonthISO(time.Now())
 	}
@@ -107,7 +110,7 @@ func (s *SQLiteStore) ApplyRecurring(month string) (domain.ApplyRecurringResult,
 	if err != nil {
 		return domain.ApplyRecurringResult{}, err
 	}
-	rules, err := s.ListRecurring()
+	rules, err := s.ListRecurring(userID)
 	if err != nil {
 		return domain.ApplyRecurringResult{}, err
 	}
@@ -123,8 +126,8 @@ func (s *SQLiteStore) ApplyRecurring(month string) (domain.ApplyRecurringResult,
 	for _, rule := range rules {
 		var exists int
 		err := sqlTx.QueryRow(
-			`SELECT COUNT(*) FROM transactions WHERE recurring_rule_id = ? AND date LIKE ?`,
-			rule.ID, validMonth+"-%",
+			`SELECT COUNT(*) FROM transactions WHERE user_id = ? AND recurring_rule_id = ? AND date LIKE ?`,
+			userID, rule.ID, validMonth+"-%",
 		).Scan(&exists)
 		if err != nil {
 			return domain.ApplyRecurringResult{}, err
@@ -150,9 +153,9 @@ func (s *SQLiteStore) ApplyRecurring(month string) (domain.ApplyRecurringResult,
 			CreatedAt:       time.Now().UTC().Format(time.RFC3339Nano),
 		}
 		_, err = sqlTx.Exec(
-			`INSERT INTO transactions (id, type, amount_cents, category, description, date, account_id, to_account_id, recurring_rule_id, created_at)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
-			item.ID, item.Type, int64(item.AmountCents), item.Category, item.Description,
+			`INSERT INTO transactions (id, user_id, type, amount_cents, category, description, date, account_id, to_account_id, recurring_rule_id, created_at)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
+			item.ID, userID, item.Type, int64(item.AmountCents), item.Category, item.Description,
 			item.Date, item.AccountID, rule.ID, item.CreatedAt,
 		)
 		if err != nil {
