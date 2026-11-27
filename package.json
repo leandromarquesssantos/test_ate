@@ -8,6 +8,7 @@
     "gate": "node scripts/atelier-gate.mjs --with-tests",
     "gate:spec": "node scripts/atelier-gate.mjs --spec-only",
     "api": "go -C backend run ./cmd/fin-server",
-    "cli": "go -C backend run ./cmd/fin-cli"
+    "cli": "go -C backend run ./cmd/fin-cli",
+    "seed": "node scripts/seed.mjs"
   }
 }
