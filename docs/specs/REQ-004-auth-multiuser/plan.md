@@ -1,7 +1,7 @@
 # Plano Técnico — REQ-004 (Autenticação + Multiusuário)
 
 - **Spec de referência:** `./spec.md`
-- **Status:** Pending Approval
+- **Status:** Approved
 
 ---
 
