@@ -9,18 +9,6 @@ import (
 	"atelier-fin/backend/internal/store"
 )
 
-const helpText = `Atelier Fin CLI (Go + SQLite) — Uso:
-  add --type <income|expense> --amount <valor> --category <cat> [--account <id>] [--desc <texto>] [--date YYYY-MM-DD]
-  edit <id> [--amount <valor>] [--category <cat>] [--desc <texto>] [--date YYYY-MM-DD]
-  list [--month YYYY-MM] [--category <cat>] [--type <tipo>] [--account <id>] [--q <busca>]
-  delete <id>
-  budget --category <cat> --limit <valor> [--month YYYY-MM]
-  summary [--month YYYY-MM]
-  accounts [list | add --name <nome> --type <tipo> | delete <id>]
-  transfer --from <id> --to <id> --amount <valor> [--desc <texto>]
-  recurring [list | add --type <tipo> --amount <valor> --category <cat> --day <1-31> | apply --month YYYY-MM]
-  export [--month YYYY-MM]`
-
 type parsedArgs struct {
 	command    string
 	flags      map[string]string
@@ -50,10 +38,33 @@ func parseArgs(argv []string) parsedArgs {
 	return res
 }
 
+func resolveUserID(s *store.SQLiteStore, emailFlag string) (string, error) {
+	if strings.TrimSpace(emailFlag) != "" {
+		u, err := s.FindUserByEmail(emailFlag)
+		return u.ID, err
+	}
+	users, err := s.ListUsers()
+	if err != nil {
+		return "", err
+	}
+	if len(users) == 0 {
+		return "", fmt.Errorf(`nenhum usuário cadastrado. Crie um com "users register --name ... --email ... --password ..." ou pelo WebApp`)
+	}
+	return users[0].ID, nil
+}
+
 func Run(argv []string, s *store.SQLiteStore) (string, error) {
 	p := parseArgs(argv)
 	if p.command == "help" || p.flags["help"] != "" {
 		return helpText, nil
+	}
+	if p.command == "users" {
+		return runUsersCommand(p, s)
+	}
+
+	uid, err := resolveUserID(s, p.flags["user"])
+	if err != nil {
+		return "", err
 	}
 
 	switch p.command {
@@ -66,7 +77,7 @@ func Run(argv []string, s *store.SQLiteStore) (string, error) {
 		if desc == "" {
 			desc = p.flags["description"]
 		}
-		tx, err := s.AddTransaction(p.flags["type"], amt, p.flags["category"], desc, p.flags["date"], p.flags["account"])
+		tx, err := s.AddTransaction(uid, p.flags["type"], amt, p.flags["category"], desc, p.flags["date"], p.flags["account"])
 		if err != nil {
 			return "", err
 		}
@@ -101,14 +112,14 @@ func Run(argv []string, s *store.SQLiteStore) (string, error) {
 		if v := p.flags["account"]; v != "" {
 			patch.AccountID = &v
 		}
-		updated, err := s.UpdateTransaction(id, patch)
+		updated, err := s.UpdateTransaction(uid, id, patch)
 		if err != nil {
 			return "", err
 		}
 		return fmt.Sprintf("Transação atualizada: %s | %s | %s", updated.ID, updated.Category, domain.FormatCentsBRL(updated.AmountCents)), nil
 
 	case "list":
-		items, err := s.ListTransactions(domain.TxFilter{
+		items, err := s.ListTransactions(uid, domain.TxFilter{
 			Month:     p.flags["month"],
 			Category:  p.flags["category"],
 			Type:      p.flags["type"],
@@ -138,7 +149,7 @@ func Run(argv []string, s *store.SQLiteStore) (string, error) {
 		return strings.Join(lines, "\n"), nil
 
 	case "delete":
-		removed, err := s.DeleteTransaction(firstPosOrFlag(p.positional, p.flags, "id"))
+		removed, err := s.DeleteTransaction(uid, firstPosOrFlag(p.positional, p.flags, "id"))
 		if err != nil {
 			return "", err
 		}
@@ -153,14 +164,14 @@ func Run(argv []string, s *store.SQLiteStore) (string, error) {
 		if month == "" {
 			month = domain.CurrentMonthISO(time.Now())
 		}
-		saved, err := s.SetBudget(month, p.flags["category"], limit)
+		saved, err := s.SetBudget(uid, month, p.flags["category"], limit)
 		if err != nil {
 			return "", err
 		}
 		return fmt.Sprintf("Orçamento definido: %s | %s -> %s", saved.Month, saved.Category, domain.FormatCentsBRL(saved.LimitCents)), nil
 
 	case "summary":
-		summary, err := s.GetMonthlySummary(p.flags["month"])
+		summary, err := s.GetMonthlySummary(uid, p.flags["month"])
 		if err != nil {
 			return "", err
 		}
@@ -181,7 +192,7 @@ func Run(argv []string, s *store.SQLiteStore) (string, error) {
 		return strings.Join(lines, "\n"), nil
 	}
 
-	out, handled, err := runExtra(p, s)
+	out, handled, err := runExtra(uid, p, s)
 	if handled {
 		return out, err
 	}
