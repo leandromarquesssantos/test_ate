@@ -8,13 +8,10 @@ import (
 )
 
 func registerLedgerRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
-	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
-	})
-
 	mux.HandleFunc("GET /api/transactions", func(w http.ResponseWriter, r *http.Request) {
+		uid := userFromContext(r).ID
 		q := r.URL.Query()
-		items, err := s.ListTransactions(domain.TxFilter{
+		items, err := s.ListTransactions(uid, domain.TxFilter{
 			Month:     q.Get("month"),
 			Category:  q.Get("category"),
 			Type:      q.Get("type"),
@@ -29,6 +26,7 @@ func registerLedgerRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 	})
 
 	mux.HandleFunc("POST /api/transactions", func(w http.ResponseWriter, r *http.Request) {
+		uid := userFromContext(r).ID
 		body, err := readJSONMap(w, r)
 		if err != nil {
 			writeError(w, err)
@@ -48,7 +46,7 @@ func registerLedgerRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 		desc, _ := strField(body, "description")
 		dateStr, _ := strField(body, "date")
 		accID, _ := strField(body, "accountId")
-		created, err := s.AddTransaction(txType, amount, cat, desc, dateStr, accID)
+		created, err := s.AddTransaction(uid, txType, amount, cat, desc, dateStr, accID)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -57,6 +55,7 @@ func registerLedgerRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 	})
 
 	mux.HandleFunc("PATCH /api/transactions/{id}", func(w http.ResponseWriter, r *http.Request) {
+		uid := userFromContext(r).ID
 		body, err := readJSONMap(w, r)
 		if err != nil {
 			writeError(w, err)
@@ -84,7 +83,7 @@ func registerLedgerRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 		if v, ok := strField(body, "accountId"); ok {
 			patch.AccountID = &v
 		}
-		updated, err := s.UpdateTransaction(r.PathValue("id"), patch)
+		updated, err := s.UpdateTransaction(uid, r.PathValue("id"), patch)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -93,7 +92,8 @@ func registerLedgerRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 	})
 
 	mux.HandleFunc("DELETE /api/transactions/{id}", func(w http.ResponseWriter, r *http.Request) {
-		removed, err := s.DeleteTransaction(r.PathValue("id"))
+		uid := userFromContext(r).ID
+		removed, err := s.DeleteTransaction(uid, r.PathValue("id"))
 		if err != nil {
 			writeError(w, err)
 			return
@@ -102,7 +102,8 @@ func registerLedgerRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 	})
 
 	mux.HandleFunc("GET /api/budgets", func(w http.ResponseWriter, r *http.Request) {
-		items, err := s.ListBudgets(r.URL.Query().Get("month"))
+		uid := userFromContext(r).ID
+		items, err := s.ListBudgets(uid, r.URL.Query().Get("month"))
 		if err != nil {
 			writeError(w, err)
 			return
@@ -111,6 +112,7 @@ func registerLedgerRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 	})
 
 	mux.HandleFunc("PUT /api/budgets", func(w http.ResponseWriter, r *http.Request) {
+		uid := userFromContext(r).ID
 		body, err := readJSONMap(w, r)
 		if err != nil {
 			writeError(w, err)
@@ -127,7 +129,7 @@ func registerLedgerRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 		}
 		month, _ := strField(body, "month")
 		cat, _ := strField(body, "category")
-		saved, err := s.SetBudget(month, cat, limit)
+		saved, err := s.SetBudget(uid, month, cat, limit)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -136,8 +138,9 @@ func registerLedgerRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 	})
 
 	mux.HandleFunc("DELETE /api/budgets", func(w http.ResponseWriter, r *http.Request) {
+		uid := userFromContext(r).ID
 		q := r.URL.Query()
-		removed, err := s.DeleteBudget(q.Get("month"), q.Get("category"))
+		removed, err := s.DeleteBudget(uid, q.Get("month"), q.Get("category"))
 		if err != nil {
 			writeError(w, err)
 			return
@@ -146,7 +149,8 @@ func registerLedgerRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 	})
 
 	mux.HandleFunc("GET /api/summary", func(w http.ResponseWriter, r *http.Request) {
-		summary, err := s.GetMonthlySummary(r.URL.Query().Get("month"))
+		uid := userFromContext(r).ID
+		summary, err := s.GetMonthlySummary(uid, r.URL.Query().Get("month"))
 		if err != nil {
 			writeError(w, err)
 			return
@@ -155,9 +159,10 @@ func registerLedgerRoutes(mux *http.ServeMux, s *store.SQLiteStore) {
 	})
 
 	mux.HandleFunc("GET /api/export/csv", func(w http.ResponseWriter, r *http.Request) {
+		uid := userFromContext(r).ID
 		q := r.URL.Query()
 		month := q.Get("month")
-		csvText, err := s.ExportCSV(domain.TxFilter{
+		csvText, err := s.ExportCSV(uid, domain.TxFilter{
 			Month:     month,
 			Category:  q.Get("category"),
 			Type:      q.Get("type"),

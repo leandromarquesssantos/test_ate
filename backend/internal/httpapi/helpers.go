@@ -127,6 +127,14 @@ func writeError(w http.ResponseWriter, err error) {
 		writeJSON(w, statusErr.status, map[string]string{"error": statusErr.msg, "code": statusErr.code})
 		return
 	}
+	if errors.Is(err, domain.ErrUnauthorized) {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": err.Error(), "code": "UNAUTHORIZED"})
+		return
+	}
+	if errors.Is(err, domain.ErrConflict) {
+		writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error(), "code": "CONFLICT"})
+		return
+	}
 	if errors.Is(err, domain.ErrValidation) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error(), "code": "VALIDATION_ERROR"})
 		return
