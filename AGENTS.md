@@ -19,6 +19,7 @@ Antes de editar código, classifique o pedido:
     3. **Gate de Aprovação Humana** (aguardar OK explícito do Principal Engineer)
     4. `atelier-spec-implement` → implementação orientada a TDD + execução do gate determinístico
     5. `atelier-code-review` → revisão multi-perspectiva registrada em `review.md`
+    6. `atelier-qa-release` → **Agente QA independente** executa E2E em navegador real (`npm run qa`) e registra parecer em `qa-report.md` antes do merge/release
 
 ---
 
@@ -31,7 +32,7 @@ Regras verificadas automaticamente por `node scripts/atelier-gate.mjs`:
 3. **Separação de camadas:** `backend/internal/domain` deve usar **apenas stdlib Go** (proibido importar `database/sql`, `net/http`, `store`, `httpapi` ou `cli`).
 4. **Zero dependências de Windows / CGO:** SQLite deve operar em Go puro (`modernc.org/sqlite`), compilando sem GCC/MSVC.
 5. **Contrato de Artefatos:** Toda `REQ-XXX` concluída deve possuir `spec.md`, `plan.md`, `tasks.json` (100% `done`) e `review.md`.
-6. **Contrato de "Done-State":** Nenhum agente pode declarar uma tarefa concluída enquanto `npm run gate` (`gofmt`, `go vet`, `go test`, testes WebApp e leis arquiteturais) não passar com código `0`.
+6. **Contrato de "Done-State":** Nenhum agente pode declarar uma tarefa concluída enquanto `npm run gate` não passar com código `0`; nenhuma release pode ser liberada sem aprovação do Agente QA (`npm run gate:release` + `qa-report.md`).
 
 ---
 

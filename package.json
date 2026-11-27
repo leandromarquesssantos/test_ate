@@ -6,7 +6,9 @@
   "scripts": {
     "test": "node scripts/atelier-gate.mjs --with-tests",
     "gate": "node scripts/atelier-gate.mjs --with-tests",
+    "gate:release": "node scripts/atelier-gate.mjs --with-tests --with-qa",
     "gate:spec": "node scripts/atelier-gate.mjs --spec-only",
+    "qa": "node scripts/qa-e2e.mjs",
     "api": "go -C backend run ./cmd/fin-server",
     "cli": "go -C backend run ./cmd/fin-cli",
     "seed": "node scripts/seed.mjs"

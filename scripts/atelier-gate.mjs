@@ -17,6 +17,7 @@ const BACKEND_DIR = path.join(ROOT, "backend");
 const MAX_LINES = 220;
 const args = new Set(process.argv.slice(2));
 const withTests = args.has("--with-tests");
+const withQA = args.has("--with-qa");
 const specPhaseOnly = args.has("--spec-only");
 
 const errors = [];
@@ -158,6 +159,15 @@ function runChecksAndTests() {
     checks.push("Suíte de testes WebApp passou 100%.");
   } catch {
     errors.push("Falha nos testes do WebApp.");
+  }
+
+  if (withQA) {
+    try {
+      execSync("node scripts/qa-e2e.mjs", { stdio: "inherit", cwd: ROOT });
+      checks.push("Suíte QA E2E (navegador real headless) passou 100%.");
+    } catch {
+      errors.push("Falha na suíte QA E2E de release.");
+    }
   }
 }
 
