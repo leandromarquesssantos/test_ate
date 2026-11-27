@@ -136,6 +136,15 @@ export async function launchCDPBrowser() {
     throw new Error(`Timeout aguardando condição E2E: ${label}`);
   }
 
+  async function setViewport(width, height) {
+    await send("Emulation.setDeviceMetricsOverride", {
+      width,
+      height,
+      deviceScaleFactor: 1,
+      mobile: width < 600
+    });
+  }
+
   async function navigate(url) {
     await send("Page.navigate", { url });
     await waitFor(`document.readyState === "complete"`, `load ${url}`);
@@ -148,5 +157,5 @@ export async function launchCDPBrowser() {
     try { fs.rmSync(profileDir, { recursive: true, force: true }); } catch { /* ignore */ }
   }
 
-  return { navigate, evalExpr, waitFor, pageErrors, close };
+  return { navigate, setViewport, evalExpr, waitFor, pageErrors, close };
 }

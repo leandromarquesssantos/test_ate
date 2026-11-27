@@ -214,7 +214,35 @@ async function main() {
     );
     pass("4. Orçamento warning, recorrência idempotente e filtro em tempo real validados");
 
-    // 5. Logout e re-Login com persistência SQLite
+    // 5. Auditoria geométrica de layout (desktop 1280px e mobile 390px)
+    for (const [label, w, h] of [["desktop 1280px", 1280, 900], ["mobile 390px", 390, 844]]) {
+      await browser.setViewport(w, h);
+      await new Promise((r) => setTimeout(r, 120));
+      const overflows = await browser.evalExpr(`
+        const issues = [];
+        if (document.documentElement.scrollWidth > window.innerWidth + 1) {
+          issues.push("horizontal viewport overflow: " + document.documentElement.scrollWidth + " > " + window.innerWidth);
+        }
+        for (const card of document.querySelectorAll("#app-view .card")) {
+          const cr = card.getBoundingClientRect();
+          if (cr.width === 0) continue;
+          for (const el of card.querySelectorAll("button, input, select")) {
+            if (getComputedStyle(el).display === "none") continue;
+            const er = el.getBoundingClientRect();
+            if (er.width === 0) continue;
+            if (er.right > cr.right + 1 || er.left < cr.left - 1) {
+              issues.push((el.id || el.name || el.textContent.trim()) + " overflow card");
+            }
+          }
+        }
+        return issues;
+      `);
+      assert.deepEqual(overflows, [], `Overflow de layout em ${label}: ${overflows.join(", ")}`);
+    }
+    await browser.setViewport(1280, 900);
+    pass("5. Auditoria geométrica de layout: 0 controles vazando dos cards (desktop 1280px e mobile 390px)");
+
+    // 6. Logout e re-Login com persistência SQLite
     await browser.evalExpr(`document.getElementById("logout-btn").click();`);
     await browser.waitFor(
       `getComputedStyle(document.getElementById("app-view")).display === "none" &&
@@ -233,14 +261,14 @@ async function main() {
        document.getElementById("kpi-income").textContent === "R$ 5.000,00"`,
       "login restaura sessão e dados do SQLite"
     );
-    pass("5. Logout limpa tela e novo Login redireciona corretamente mantendo dados no SQLite");
+    pass("6. Logout limpa tela e novo Login redireciona corretamente mantendo dados no SQLite");
 
     assert.equal(
       browser.pageErrors.length,
       0,
       `Erros de navegador detectados:\n${browser.pageErrors.join("\n")}`
     );
-    pass("6. Zero erros de console e zero exceções JS durante toda a jornada");
+    pass("7. Zero erros de console e zero exceções JS durante toda a jornada");
 
     console.log(`\nQA Release E2E APROVADO (${steps.length}/${steps.length} cenários).\n`);
   } finally {
