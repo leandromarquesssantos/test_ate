@@ -9,14 +9,25 @@ import (
 	"atelier-fin/backend/internal/store"
 )
 
+func resolveRepoRoot() string {
+	if _, err := os.Stat(filepath.Join("packages", "web", "src")); err == nil {
+		return "."
+	}
+	if _, err := os.Stat(filepath.Join("..", "packages", "web", "src")); err == nil {
+		return ".."
+	}
+	return "."
+}
+
 func main() {
+	root := resolveRepoRoot()
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
-		dbPath = filepath.Join("data", "atelier-fin.db")
+		dbPath = filepath.Join(root, "data", "atelier-fin.db")
 	}
 	legacyJSON := os.Getenv("LEGACY_DATA_FILE")
 	if legacyJSON == "" {
-		legacyJSON = filepath.Join("data", "ledger.json")
+		legacyJSON = filepath.Join(root, "data", "ledger.json")
 	}
 
 	s, err := store.OpenSQLite(dbPath)
